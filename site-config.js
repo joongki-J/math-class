@@ -49,7 +49,7 @@ const TOOLS = [
     symbol: "∿",
     description: "y = sin x, cos x, tan x 그래프를 손으로 그려 제출하고 AI 피드백을 받습니다. 학교 Google 계정으로 로그인합니다.",
     tags: ["삼각함수", "그래프", "sin", "cos", "tan", "AI 피드백"],
-    url: "https://joongki-j.github.io/trig-draw/"
+    url: "./trig-draw/"
   }
   // ↓ 새 앱은 위 } 뒤에 쉼표(,)를 찍고 아래처럼 이어 붙이세요.
   //   다른 저장소에 올린 앱(예: 3부 삼각함수 그래프 그리기)은 url에 전체 주소를 씁니다.

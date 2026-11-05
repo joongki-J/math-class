@@ -42,6 +42,14 @@ const TOOLS = [
     description: "기울기 a와 y절편 b를 바꾸며 y = ax + b의 그래프가 어떻게 움직이는지 관찰합니다.",
     tags: ["일차함수", "기울기", "y절편"],
     url: "./linear-function/"
+  },
+  {
+    title: "미적분Ⅰ 탐구 도구",
+    subject: "미적분Ⅰ",
+    symbol: "∫",
+    description: "미적분Ⅰ 수업에서 바로 여는 탐구 도구입니다.",
+    tags: ["미적분Ⅰ"],
+    url: "https://script.google.com/macros/s/AKfycbytxZsurTsQMqNzkYK0pzmEVRU5ul1N_ofxngqLNP-xBETBIcCgzWNxORHzwRZBy8dN/exec"
   }
   // ↓ 새 앱은 위 } 뒤에 쉼표(,)를 찍고 아래처럼 이어 붙이세요.
   //   다른 저장소에 올린 앱(예: 3부 삼각함수 그래프 그리기)은 url에 전체 주소를 씁니다.

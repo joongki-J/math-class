@@ -272,7 +272,7 @@ sub{font-style:normal;font-size:.72em;line-height:0}
 
 /* 신경망 */
 .net{position:relative;width:100%;max-width:520px;margin:0 auto;aspect-ratio:360/212}
-.net.mlp{aspect-ratio:360/196}
+.net.mlp{aspect-ratio:360/276}
 .msteps{display:block;width:100%;max-width:520px;margin:0 auto;overflow:visible}
 .stitle{font:600 10.5px var(--body)}.stitle.ka{fill:var(--ha)}.stitle.kb{fill:var(--hb)}.stitle.kr{fill:var(--on)}
 .net svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
@@ -554,29 +554,35 @@ td.empty{color:var(--rule)}
       <div class="panel-head"><div><div class="panel-title">① 뉴런을 골라 가중치와 편향 정하기</div></div></div>
       <div class="panel-body">
       <div class="net mlp">
-        <svg viewBox="0 0 360 196" id="mSvg">
+        <svg viewBox="0 0 360 276" id="mSvg">
           <line class="edge" x1="36" y1="52" x2="176" y2="52"/><line class="edge" x1="36" y1="52" x2="176" y2="144"/>
           <line class="edge" x1="36" y1="144" x2="176" y2="52"/><line class="edge" x1="36" y1="144" x2="176" y2="144"/>
           <line class="edge" x1="176" y1="52" x2="312" y2="98"/><line class="edge" x1="176" y1="144" x2="312" y2="98"/>
+          <line class="edge" x1="36" y1="240" x2="176" y2="52"/><line class="edge" x1="36" y1="240" x2="176" y2="144"/>
+          <line class="edge" x1="176" y1="240" x2="312" y2="98"/>
           <line class="trail" id="mf1"/><line class="trail" id="mf2"/><line class="trail" id="mf3"/>
           <line class="trail" id="mf4"/><line class="trail" id="mf5"/><line class="trail" id="mf6"/>
+          <line class="trail" id="mf7"/><line class="trail" id="mf8"/><line class="trail" id="mf9"/>
           <circle class="pulse" id="mp1" r="5"/><circle class="pulse" id="mp2" r="5"/><circle class="pulse" id="mp3" r="5"/>
           <circle class="pulse" id="mp4" r="5"/><circle class="pulse" id="mp5" r="5"/><circle class="pulse" id="mp6" r="5"/>
+          <circle class="pulse" id="mp7" r="5"/><circle class="pulse" id="mp8" r="5"/><circle class="pulse" id="mp9" r="5"/>
           <text class="wlab ka" id="mw_h1_w1" x="106" y="46"></text>
           <text class="wlab ka" id="mw_h1_w2" x="84" y="130"></text>
           <text class="wlab kb" id="mw_h2_w1" x="84" y="74"></text>
           <text class="wlab kb" id="mw_h2_w2" x="106" y="158"></text>
           <text class="wlab kr" id="mw_o_w1" x="250" y="66"></text>
           <text class="wlab kr" id="mw_o_w2" x="250" y="138"></text>
-          <text class="wlab ka" id="mw_h1_b" x="176" y="22"></text>
-          <text class="wlab kb" id="mw_h2_b" x="176" y="182"></text>
-          <text class="wlab kr" id="mw_o_b" x="312" y="136"></text>
+          <text class="wlab ka" id="mw_h1_b" x="62" y="196"></text>
+          <text class="wlab kb" id="mw_h2_b" x="78" y="234"></text>
+          <text class="wlab kr" id="mw_o_b" x="256" y="182"></text>
           <circle class="node" id="mnX1" cx="36" cy="52" r="16"/><text class="ntext" id="mtX1" x="36" y="52"></text>
           <circle class="node" id="mnX2" cx="36" cy="144" r="16"/><text class="ntext" id="mtX2" x="36" y="144"></text>
           <circle class="node ka tap" id="mnH1" data-n="h1" cx="176" cy="52" r="20"/><text class="ntext" id="mtH1" x="176" y="52"></text>
           <circle class="node kb tap" id="mnH2" data-n="h2" cx="176" cy="144" r="20"/><text class="ntext" id="mtH2" x="176" y="144"></text>
           <circle class="node kr tap" id="mnO" data-n="o" cx="312" cy="98" r="20"/><text class="ntext" id="mtO" x="312" y="98"></text>
           <text class="nlabel" x="312" y="70">출력</text>
+          <text class="nlabel" x="36" y="216">편향</text><circle class="node" id="mnB1" cx="36" cy="240" r="16"/><text class="ntext" x="36" y="240">1</text>
+          <text class="nlabel" x="176" y="216">편향</text><circle class="node" id="mnB2" cx="176" cy="240" r="16"/><text class="ntext" x="176" y="240">1</text>
         </svg>
       </div>
       <svg id="mSteps" class="msteps" viewBox="0 0 360 64" role="img" aria-label="세 뉴런의 계단함수 그래프"></svg>
@@ -1198,16 +1204,16 @@ td.empty{color:var(--rule)}
   function mRenderNetLabels(){
     ["h1","h2","o"].forEach(function(k){
       var p=M.n[k];
-      $("mw_"+k+"_w1").textContent=num(p.w1); $("mw_"+k+"_w2").textContent=num(p.w2); $("mw_"+k+"_b").textContent="b = "+num(p.b);
+      $("mw_"+k+"_w1").textContent=num(p.w1); $("mw_"+k+"_w2").textContent=num(p.w2); $("mw_"+k+"_b").textContent=num(p.b);
     });
     $("mnH1").classList.toggle("sel",M.sel==="h1"); $("mnH2").classList.toggle("sel",M.sel==="h2"); $("mnO").classList.toggle("sel",M.sel==="o");
   }
   function mResetNet(){
-    ["mnX1","mnX2","mnH1","mnH2","mnO"].forEach(function(id){$(id).classList.remove("lit","on","off");});
+    ["mnX1","mnX2","mnB1","mnB2","mnH1","mnH2","mnO"].forEach(function(id){$(id).classList.remove("lit","on","off");});
     $("mtX1").innerHTML=tsub("x","1"); $("mtX2").innerHTML=tsub("x","2");
     $("mtH1").innerHTML=tsub("h","1"); $("mtH2").innerHTML=tsub("h","2"); $("mtO").innerHTML='<tspan class="m">y</tspan>';
     ["mtH1","mtH2","mtO"].forEach(function(id){$(id).classList.remove("inv");});
-    for(var i=1;i<=6;i++){$("mp"+i).style.opacity=0; $("mf"+i).style.opacity=0;}
+    for(var i=1;i<=9;i++){$("mp"+i).style.opacity=0; $("mf"+i).style.opacity=0;}
     document.querySelectorAll("#mSvg .wlab.hit").forEach(function(el){el.classList.remove("hit");});
   }
   function mSetNode(nid,tid,v){$(nid).classList.remove("on","off"); $(nid).classList.add(v?"on":"off"); $(tid).innerHTML=String(v); $(tid).classList.add("inv");}
@@ -1299,16 +1305,17 @@ td.empty{color:var(--rule)}
     var a=CASES[i][0], b=CASES[i][1], f=mForward(a,b), n=M.n;
     M.cur=i; M.zShow=null; mResetNet(); mRenderSteps(); mRenderTable(); mRenderPlanes();
     $("mtX1").innerHTML=String(a); $("mtX2").innerHTML=String(b);
-    $("mnX1").classList.add("lit"); $("mnX2").classList.add("lit");
+    $("mnX1").classList.add("lit"); $("mnX2").classList.add("lit"); $("mnB1").classList.add("lit");
     cap("mCaption",'입력 ('+X1+', '+X2+') = ('+a+', '+b+')');
     await sleep(650,M,id);
-    await mFlow([[1,36,52,176,52],[2,36,52,176,144],[3,36,144,176,52],[4,36,144,176,144]],["h1_w1","h2_w1","h1_w2","h2_w2","h1_b","h2_b"],id);
+    await mFlow([[1,36,52,176,52],[2,36,52,176,144],[3,36,144,176,52],[4,36,144,176,144],[7,36,240,176,52],[8,36,240,176,144]],["h1_w1","h2_w1","h1_w2","h2_w2","h1_b","h2_b"],id);
     mSetNode("mnH1","mtH1",f.h1); mSetNode("mnH2","mtH2",f.h2);
     M.zShow={i:i,f:f,stage:1}; mRenderSteps();
     cap("mCaption",H1+': '+par(n.h1.w1)+'×'+a+' + '+par(n.h1.w2)+'×'+b+' + '+par(n.h1.b)+' = '+num(f.z1)+' → <b>'+f.h1+'</b><br>'+
                    H2+': '+par(n.h2.w1)+'×'+a+' + '+par(n.h2.w2)+'×'+b+' + '+par(n.h2.b)+' = '+num(f.z2)+' → <b>'+f.h2+'</b>');
     await sleep(1300,M,id);
-    await mFlow([[5,176,52,312,98],[6,176,144,312,98]],["o_w1","o_w2","o_b"],id);
+    $("mnB2").classList.add("lit");
+    await mFlow([[5,176,52,312,98],[6,176,144,312,98],[9,176,240,312,98]],["o_w1","o_w2","o_b"],id);
     mSetNode("mnO","mtO",f.y);
     M.zShow.stage=2; mRenderSteps();
     cap("mCaption",V("y")+': '+par(n.o.w1)+'×'+f.h1+' + '+par(n.o.w2)+'×'+f.h2+' + '+par(n.o.b)+' = '+num(f.zo)+' → <b>'+f.y+'</b>');

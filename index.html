@@ -242,10 +242,12 @@
 .m{font-family:var(--math);font-style:italic;font-weight:500}
 sub{font-style:normal;font-size:.72em;line-height:0}
 .lead{margin:0;font-size:13.5px;color:var(--muted);max-width:65ch}
-.chapters{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.chapters{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .chapters a{display:flex;flex-direction:column;align-items:center;padding:6px 4px;border-radius:10px;border:1px solid var(--rule);background:var(--card);color:var(--muted);text-decoration:none;font-weight:600;font-size:13.5px;line-height:1.25;text-align:center}
 .chapters a small{font-size:11px;font-weight:500;opacity:.8}
 .chapters a.cur{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.chapters a.ext{border-color:var(--accent);color:#c2410c}
+.chapters a.ext:hover{background:#fff1ea}
 .chapters a:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 .bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
 .seg{display:inline-flex;border:1px solid var(--rule);border-radius:9px;background:var(--card);padding:2px;gap:2px;max-width:100%}
@@ -420,6 +422,7 @@ td.empty{color:var(--rule)}
     <a href="#ch1" data-ch="1">1장<small>기본 논리 연산</small></a>
     <a href="#ch2" data-ch="2">2장<small>가중치 학습</small></a>
     <a href="#ch3" data-ch="3">3장<small>배타적 논리합</small></a>
+    <a href="./perceptron-test/" class="ext" target="_blank" rel="noopener" title="새 창에서 열기">4장<small>형성평가 ↗</small></a>
   </nav>
   <p class="lead" id="lead"></p>
 
@@ -1374,7 +1377,7 @@ td.empty{color:var(--rule)}
   };
   function show(){
     var ch=NAV.ch, single=(ch===1)||(ch===3&&NAV.xmode==="single");
-    document.querySelectorAll(".chapters a").forEach(function(a){a.classList.toggle("cur",Number(a.dataset.ch)===ch); a.setAttribute("aria-current",Number(a.dataset.ch)===ch?"page":"false");});
+    document.querySelectorAll(".chapters a[data-ch]").forEach(function(a){a.classList.toggle("cur",Number(a.dataset.ch)===ch); a.setAttribute("aria-current",Number(a.dataset.ch)===ch?"page":"false");});
     $("lead").textContent=LEADS[ch];
     $("bar1").hidden=ch!==1; $("bar3").hidden=ch!==3;
     $("lab").hidden=!single; $("learn").hidden=ch!==2; $("mlp").hidden=!(ch===3&&NAV.xmode==="mlp");
@@ -1390,7 +1393,7 @@ td.empty{color:var(--rule)}
     if(ch===2){ if(L.cur>=0&&!L.done){L.cur=-1; lRenderPlane();} }
   }
   function fromHash(){var m=/^#ch([123])$/.exec(location.hash||""); NAV.ch=m?Number(m[1]):1; show();}
-  document.querySelectorAll(".chapters a").forEach(function(a){
+  document.querySelectorAll(".chapters a[data-ch]").forEach(function(a){
     a.addEventListener("click",function(){NAV.ch=Number(a.dataset.ch); show();});
   });
   document.querySelectorAll('input[name="xmode"]').forEach(function(r){r.addEventListener("change",function(){NAV.xmode=r.value; show();});});

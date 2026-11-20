@@ -76,6 +76,7 @@
   .tool.wide{width:auto;padding:0 10px;display:inline-flex;gap:5px;font-size:12px;font-weight:700;white-space:nowrap}
   .tool.wide svg{width:16px;height:16px;flex:none}
   .tool.act{color:#a73b2c}
+  .tool.sz b{display:block;border-radius:50%;background:#15171a}
   .stage.m-erase canvas.ink{cursor:cell}
   .stage.m-stroke canvas.ink{cursor:pointer}
   .sep{width:1px;height:26px;background:var(--line);margin:0 2px}
@@ -203,6 +204,10 @@
     <button class="tool" data-mode="pen" data-color="#15171a" aria-pressed="true" title="검정 펜"><i style="background:#15171a"></i></button>
     <button class="tool" data-mode="pen" data-color="#1c6fd8" aria-pressed="false" title="파랑 펜"><i style="background:#1c6fd8"></i></button>
     <button class="tool" data-mode="pen" data-color="#e0394f" aria-pressed="false" title="빨강 펜"><i style="background:#e0394f"></i></button>
+    <span class="sep"></span>
+    <button type="button" class="tool sz" data-size="1.5" aria-pressed="false" title="가는 펜"><b style="width:4px;height:4px"></b></button>
+    <button type="button" class="tool sz" data-size="2.5" aria-pressed="true" title="보통 펜"><b style="width:7px;height:7px"></b></button>
+    <button type="button" class="tool sz" data-size="4" aria-pressed="false" title="굵은 펜"><b style="width:11px;height:11px"></b></button>
     <span class="sep"></span>
     <button class="tool wide" data-mode="erase" aria-pressed="false" title="문지른 부분만 지웁니다">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 16l9-9 6 6-6 6H8z"/><path d="M8 19h12"/></svg>지우개</button>
@@ -385,7 +390,7 @@
   function paintStroke(ctx,st){
     ctx.save();
     ctx.globalCompositeOperation=st.e?"destination-out":"source-over";
-    ctx.strokeStyle=st.c||"#000";ctx.fillStyle=st.c||"#000";ctx.lineWidth=st.e?18:2.4;ctx.lineCap="round";ctx.lineJoin="round";
+    ctx.strokeStyle=st.c||"#000";ctx.fillStyle=st.c||"#000";ctx.lineWidth=st.e?18:(st.w||2.4);ctx.lineCap="round";ctx.lineJoin="round";
     var p=st.p;
     if(p.length===1){ctx.beginPath();ctx.arc(p[0][0],p[0][1],ctx.lineWidth/2,0,Math.PI*2);ctx.fill();}
     else{ctx.beginPath();ctx.moveTo(p[0][0],p[0][1]);for(var i=1;i<p.length;i++)ctx.lineTo(p[i][0],p[i][1]);ctx.stroke();}
@@ -427,12 +432,14 @@
   function renderAll(){ boxes.forEach(function(b){drawBg(b);drawOv(b);drawInk(b);}); }
 
   // ---------- 그리기 ----------
-  var tool={mode:"pen",color:"#15171a"};
+  var tool={mode:"pen",color:"#15171a",size:2.5};
   var hist={}; // 칸별 되돌리기용 스냅숏
   function snap(key){ var h=hist[key]=hist[key]||[]; h.push(JSON.stringify(state.strokes[key]||[])); if(h.length>60) h.shift(); }
   function undo(key){ var h=hist[key]; if(!h||!h.length) return; state.strokes[key]=JSON.parse(h.pop()); drawInk(boxOf(key)); save(); }
-  function setTool(mode,color){
+  function setTool(mode,color,size){
     tool.mode=mode; if(mode==="pen"&&color) tool.color=color;
+    if(size) tool.size=+size;
+    document.querySelectorAll(".tool[data-size]").forEach(function(x){ x.setAttribute("aria-pressed",+x.getAttribute("data-size")===tool.size?"true":"false"); });
     document.querySelectorAll(".tool[data-mode]").forEach(function(x){
       var on=x.getAttribute("data-mode")===mode&&(mode!=="pen"||x.getAttribute("data-color")===tool.color);
       x.setAttribute("aria-pressed",on?"true":"false");
@@ -467,7 +474,7 @@
       if(pid!==null) return; pid=e.pointerId; cv.setPointerCapture(pid); e.preventDefault();
       mode=tool.mode; snap(b.key);
       if(mode==="stroke"){ changed=strokeErase(b,pos(e)); return; }
-      cur={c:tool.color,e:mode==="erase"?1:0,p:[pos(e)]};
+      cur={c:tool.color,e:mode==="erase"?1:0,w:tool.size,p:[pos(e)]};
       (state.strokes[b.key]=state.strokes[b.key]||[]).push(cur);
       paintStroke(fit(cv),cur);
     });
@@ -477,7 +484,7 @@
       if(mode==="stroke"){ list.forEach(function(ev){ if(strokeErase(b,pos(ev))) changed=true; }); return; }
       if(!cur) return;
       list.forEach(function(ev){cur.p.push(pos(ev));});
-      var ctx=fit(cv), n=cur.p.length, seg={c:cur.c,e:cur.e,p:cur.p.slice(Math.max(0,n-list.length-1))};
+      var ctx=fit(cv), n=cur.p.length, seg={c:cur.c,e:cur.e,w:cur.w,p:cur.p.slice(Math.max(0,n-list.length-1))};
       paintStroke(ctx,seg);
     });
     function end(e){
@@ -600,7 +607,7 @@
     var gbar=document.querySelector(".toolbar.global");
     window.addEventListener("message",function(e){
       if(e.source!==window.parent||!e.data) return;
-      if(e.data.type==="ptest-tool") setTool(e.data.mode,e.data.color);
+      if(e.data.type==="ptest-tool") setTool(e.data.mode,e.data.color,e.data.size);
       if(e.data.type==="ptest-clearink") clearInk();
     });
     document.querySelector(".summary .acts").insertBefore(gbar.querySelector(".toggle"),document.querySelector(".summary .acts").firstChild);
@@ -628,6 +635,7 @@
     if(t.hasAttribute("data-undo")) undo(t.getAttribute("data-undo"));
     if(t.hasAttribute("data-clear")){ var k2=t.getAttribute("data-clear"); if((state.strokes[k2]||[]).length){ snap(k2); state.strokes[k2]=[]; drawInk(boxOf(k2)); save(); } }
     if(t.hasAttribute("data-mode")) setTool(t.getAttribute("data-mode"),t.getAttribute("data-color"));
+    if(t.hasAttribute("data-size")) setTool("pen",null,t.getAttribute("data-size"));
     if(t.getAttribute("data-act")==="clearInk"&&confirm("모든 칸의 그림을 지울까요? 가중치·편향은 그대로 둡니다. (칸마다 되돌리기 가능)")) clearInk();
   });
   function boxOf(k){ return boxes.filter(function(b){return b.key===k;})[0]; }

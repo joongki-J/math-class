@@ -256,6 +256,7 @@ sub{font-style:normal;font-size:.72em;line-height:0}
 .etb-b.wide{width:auto;padding:0 10px;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;white-space:nowrap}
 .etb-b svg{width:16px;height:16px;flex:none}
 .etb-b.act{color:#a73b2c}
+.etb-b.sz b{display:block;border-radius:50%;background:#15171a}
 .chapters a:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 .bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
 .seg{display:inline-flex;border:1px solid var(--rule);border-radius:9px;background:var(--card);padding:2px;gap:2px;max-width:100%}
@@ -658,6 +659,10 @@ td.empty{color:var(--rule)}
       <button type="button" class="etb-b" data-mode="pen" data-color="#15171a" aria-pressed="true" title="검정 펜"><i style="background:#15171a"></i></button>
       <button type="button" class="etb-b" data-mode="pen" data-color="#1c6fd8" aria-pressed="false" title="파랑 펜"><i style="background:#1c6fd8"></i></button>
       <button type="button" class="etb-b" data-mode="pen" data-color="#e0394f" aria-pressed="false" title="빨강 펜"><i style="background:#e0394f"></i></button>
+      <span class="etb-sep"></span>
+      <button type="button" class="etb-b sz" data-size="1.5" aria-pressed="false" title="가는 펜"><b style="width:4px;height:4px"></b></button>
+      <button type="button" class="etb-b sz" data-size="2.5" aria-pressed="true" title="보통 펜"><b style="width:7px;height:7px"></b></button>
+      <button type="button" class="etb-b sz" data-size="4" aria-pressed="false" title="굵은 펜"><b style="width:11px;height:11px"></b></button>
       <span class="etb-sep"></span>
       <button type="button" class="etb-b wide" data-mode="erase" aria-pressed="false" title="문지른 부분만 지웁니다">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 16l9-9 6 6-6 6H8z"/><path d="M8 19h12"/></svg>지우개</button>
@@ -1428,7 +1433,7 @@ td.empty{color:var(--rule)}
   document.querySelectorAll('input[name="xmode"]').forEach(function(r){r.addEventListener("change",function(){NAV.xmode=r.value; show();});});
   window.addEventListener("hashchange",fromHash);
   // 4장 그리기 도구 → 형성평가 화면으로 전달
-  var ETOOL={type:"ptest-tool",mode:"pen",color:"#15171a"};
+  var ETOOL={type:"ptest-tool",mode:"pen",color:"#15171a",size:"2.5"};
   function sendTool(){ try{ $("evalFrame").contentWindow.postMessage(ETOOL,"*"); }catch(e){} }
   $("evalFrame").addEventListener("load",sendTool);
   $("evalTools").addEventListener("click",function(e){
@@ -1437,8 +1442,10 @@ td.empty{color:var(--rule)}
       if(confirm("모든 칸의 그림을 지울까요? 가중치·편향은 그대로 둡니다. (칸마다 되돌리기 가능)")){ try{ $("evalFrame").contentWindow.postMessage({type:"ptest-clearink"},"*"); }catch(err){} }
       return;
     }
-    var mode=t.getAttribute("data-mode"); if(!mode) return;
-    ETOOL.mode=mode; if(mode==="pen") ETOOL.color=t.getAttribute("data-color");
+    var mode=t.getAttribute("data-mode"), size=t.getAttribute("data-size");
+    if(size){ mode="pen"; ETOOL.size=size; document.querySelectorAll("#evalTools .etb-b[data-size]").forEach(function(x){ x.setAttribute("aria-pressed",x===t?"true":"false"); }); }
+    if(!mode) return;
+    ETOOL.mode=mode; if(mode==="pen"&&!size) ETOOL.color=t.getAttribute("data-color");
     document.querySelectorAll("#evalTools .etb-b[data-mode]").forEach(function(x){
       var on=x.getAttribute("data-mode")===mode&&(mode!=="pen"||x.getAttribute("data-color")===ETOOL.color);
       x.setAttribute("aria-pressed",on?"true":"false");

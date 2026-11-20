@@ -247,6 +247,15 @@ sub{font-style:normal;font-size:.72em;line-height:0}
 .chapters a small{font-size:11px;font-weight:500;opacity:.8}
 .chapters a.cur{background:var(--ink);color:var(--card);border-color:var(--ink)}
 .evalframe{display:block;width:100%;height:1600px;border:0;background:transparent}
+.etb{position:sticky;top:6px;z-index:20;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;padding:8px 10px;background:rgba(251,249,243,.97);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.etb-lab{font-size:11px;font-weight:800;color:var(--muted);margin-right:2px}
+.etb-sep{width:1px;height:26px;background:var(--line);margin:0 2px}
+.etb-b{width:38px;height:38px;border-radius:10px;border:1px solid #c9c4b8;background:#fbf9f3;cursor:pointer;display:inline-grid;place-items:center;padding:0;color:var(--ink)}
+.etb-b[aria-pressed="true"]{border:2px solid #15171a;background:#fff}
+.etb-b i{display:block;width:16px;height:16px;border-radius:50%}
+.etb-b.wide{width:auto;padding:0 10px;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;white-space:nowrap}
+.etb-b svg{width:16px;height:16px;flex:none}
+.etb-b.act{color:#a73b2c}
 .chapters a:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 .bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
 .seg{display:inline-flex;border:1px solid var(--rule);border-radius:9px;background:var(--card);padding:2px;gap:2px;max-width:100%}
@@ -644,6 +653,19 @@ td.empty{color:var(--rule)}
 
   <!-- ===== 4장: 형성평가 (perceptron-test/를 불러와 보여 줌) ===== -->
   <section id="evalSec" hidden>
+    <div class="etb" id="evalTools" role="toolbar" aria-label="그리기 도구">
+      <span class="etb-lab">펜</span>
+      <button type="button" class="etb-b" data-mode="pen" data-color="#15171a" aria-pressed="true" title="검정 펜"><i style="background:#15171a"></i></button>
+      <button type="button" class="etb-b" data-mode="pen" data-color="#1c6fd8" aria-pressed="false" title="파랑 펜"><i style="background:#1c6fd8"></i></button>
+      <button type="button" class="etb-b" data-mode="pen" data-color="#e0394f" aria-pressed="false" title="빨강 펜"><i style="background:#e0394f"></i></button>
+      <span class="etb-sep"></span>
+      <button type="button" class="etb-b wide" data-mode="erase" aria-pressed="false" title="문지른 부분만 지웁니다">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 16l9-9 6 6-6 6H8z"/><path d="M8 19h12"/></svg>지우개</button>
+      <button type="button" class="etb-b wide" data-mode="stroke" aria-pressed="false" title="닿은 선을 한 번에 통째로 지웁니다">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 17c4-8 7 2 10-5s5-6 8-4"/><path d="M15 15l6 6M21 15l-6 6"/></svg>선 지우개</button>
+      <button type="button" class="etb-b wide act" data-act="clearInk" title="모든 칸의 그림을 지웁니다 (가중치는 그대로)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>그림 전체 지우기</button>
+    </div>
     <iframe class="evalframe" id="evalFrame" title="퍼셉트론 형성평가"></iframe>
   </section>
   </div>
@@ -1405,6 +1427,24 @@ td.empty{color:var(--rule)}
   });
   document.querySelectorAll('input[name="xmode"]').forEach(function(r){r.addEventListener("change",function(){NAV.xmode=r.value; show();});});
   window.addEventListener("hashchange",fromHash);
+  // 4장 그리기 도구 → 형성평가 화면으로 전달
+  var ETOOL={type:"ptest-tool",mode:"pen",color:"#15171a"};
+  function sendTool(){ try{ $("evalFrame").contentWindow.postMessage(ETOOL,"*"); }catch(e){} }
+  $("evalFrame").addEventListener("load",sendTool);
+  $("evalTools").addEventListener("click",function(e){
+    var t=e.target.closest("button"); if(!t) return;
+    if(t.getAttribute("data-act")==="clearInk"){
+      if(confirm("모든 칸의 그림을 지울까요? 가중치·편향은 그대로 둡니다. (칸마다 되돌리기 가능)")){ try{ $("evalFrame").contentWindow.postMessage({type:"ptest-clearink"},"*"); }catch(err){} }
+      return;
+    }
+    var mode=t.getAttribute("data-mode"); if(!mode) return;
+    ETOOL.mode=mode; if(mode==="pen") ETOOL.color=t.getAttribute("data-color");
+    document.querySelectorAll("#evalTools .etb-b[data-mode]").forEach(function(x){
+      var on=x.getAttribute("data-mode")===mode&&(mode!=="pen"||x.getAttribute("data-color")===ETOOL.color);
+      x.setAttribute("aria-pressed",on?"true":"false");
+    });
+    sendTool();
+  });
   window.addEventListener("message",function(e){
     var f=$("evalFrame");
     if(!f||e.source!==f.contentWindow||!e.data||e.data.type!=="ptest-height") return;

@@ -73,6 +73,11 @@
   .tool[aria-pressed="true"]{border:2px solid #15171a;background:#fff}
   .tool i{display:block;width:16px;height:16px;border-radius:50%}
   .tool svg{width:18px;height:18px}
+  .tool.wide{width:auto;padding:0 10px;display:inline-flex;gap:5px;font-size:12px;font-weight:700;white-space:nowrap}
+  .tool.wide svg{width:16px;height:16px;flex:none}
+  .tool.act{color:#a73b2c}
+  .stage.m-erase canvas.ink{cursor:cell}
+  .stage.m-stroke canvas.ink{cursor:pointer}
   .sep{width:1px;height:26px;background:var(--line);margin:0 2px}
   .toolbar .spacer{flex:1}
 
@@ -130,7 +135,6 @@
   .embed .app{padding:0}
   .embed .topbar,.embed .foot{display:none}
   .embed .toolbar.global{display:none}
-  .embed .toolbar.local{position:static;box-shadow:none;margin-bottom:12px}
   @media (max-width:820px){
     .boxes{grid-template-columns:1fr}
     .box{max-width:440px;width:100%;margin:0 auto}
@@ -167,13 +171,16 @@
 
   <div class="toolbar global" role="toolbar" aria-label="그리기 도구">
     <span class="lab">펜</span>
-    <button class="tool" data-color="#15171a" aria-pressed="true" title="검정 펜"><i style="background:#15171a"></i></button>
-    <button class="tool" data-color="#1c6fd8" aria-pressed="false" title="파랑 펜"><i style="background:#1c6fd8"></i></button>
-    <button class="tool" data-color="#e0394f" aria-pressed="false" title="빨강 펜"><i style="background:#e0394f"></i></button>
+    <button class="tool" data-mode="pen" data-color="#15171a" aria-pressed="true" title="검정 펜"><i style="background:#15171a"></i></button>
+    <button class="tool" data-mode="pen" data-color="#1c6fd8" aria-pressed="false" title="파랑 펜"><i style="background:#1c6fd8"></i></button>
+    <button class="tool" data-mode="pen" data-color="#e0394f" aria-pressed="false" title="빨강 펜"><i style="background:#e0394f"></i></button>
     <span class="sep"></span>
-    <button class="tool" data-eraser="1" aria-pressed="false" title="지우개">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 16l9-9 6 6-6 6H8z"/><path d="M8 19h12"/></svg>
-    </button>
+    <button class="tool wide" data-mode="erase" aria-pressed="false" title="문지른 부분만 지웁니다">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 16l9-9 6 6-6 6H8z"/><path d="M8 19h12"/></svg>지우개</button>
+    <button class="tool wide" data-mode="stroke" aria-pressed="false" title="닿은 선을 한 번에 통째로 지웁니다">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 17c4-8 7 2 10-5s5-6 8-4"/><path d="M15 15l6 6M21 15l-6 6"/></svg>선 지우개</button>
+    <button class="tool wide act" data-act="clearInk" title="모든 칸의 그림을 지웁니다 (가중치는 그대로)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>그림 전체 지우기</button>
     <span class="spacer"></span>
     <label class="toggle"><input type="checkbox" id="showLine" checked disabled> 채점 후 내 가중치 직선 보기</label>
   </div>
@@ -184,7 +191,7 @@
     <div class="panel-body summary">
       <div class="score" id="score">문항마다 그림과 가중치·편향을 적은 뒤 <b style="font-size:inherit">채점하기</b>를 누르세요.</div>
       <div class="acts">
-        <button class="btn danger" id="resetAll">전체 지우기</button>
+        <button class="btn danger" id="resetAll">처음부터 다시</button>
         <button class="btn" id="saveImg">답안 이미지 저장</button>
       </div>
     </div>
@@ -387,24 +394,64 @@
   function renderAll(){ boxes.forEach(function(b){drawBg(b);drawOv(b);drawInk(b);}); }
 
   // ---------- 그리기 ----------
-  var tool={color:"#15171a",eraser:false};
+  var tool={mode:"pen",color:"#15171a"};
+  var hist={}; // 칸별 되돌리기용 스냅숏
+  function snap(key){ var h=hist[key]=hist[key]||[]; h.push(JSON.stringify(state.strokes[key]||[])); if(h.length>60) h.shift(); }
+  function undo(key){ var h=hist[key]; if(!h||!h.length) return; state.strokes[key]=JSON.parse(h.pop()); drawInk(boxOf(key)); save(); }
+  function setTool(mode,color){
+    tool.mode=mode; if(mode==="pen"&&color) tool.color=color;
+    document.querySelectorAll(".tool[data-mode]").forEach(function(x){
+      var on=x.getAttribute("data-mode")===mode&&(mode!=="pen"||x.getAttribute("data-color")===tool.color);
+      x.setAttribute("aria-pressed",on?"true":"false");
+    });
+    document.querySelectorAll(".stage").forEach(function(st){ st.classList.toggle("m-erase",mode==="erase"); st.classList.toggle("m-stroke",mode==="stroke"); });
+  }
+  function clearInk(){
+    boxes.forEach(function(b){ if((state.strokes[b.key]||[]).length){ snap(b.key); state.strokes[b.key]=[]; drawInk(b); } });
+    save();
+  }
+  // 점 p에서 선분 ab까지 거리
+  function segDist(p,a,b){
+    var dx=b[0]-a[0], dy=b[1]-a[1], L=dx*dx+dy*dy, t=L?((p[0]-a[0])*dx+(p[1]-a[1])*dy)/L:0;
+    t=Math.max(0,Math.min(1,t)); var x=a[0]+t*dx-p[0], y=a[1]+t*dy-p[1]; return Math.sqrt(x*x+y*y);
+  }
+  function hitStroke(st,p,r){
+    var q=st.p; if(q.length===1) return segDist(p,q[0],q[0])<=r;
+    for(var i=1;i<q.length;i++) if(segDist(p,q[i-1],q[i])<=r) return true;
+    return false;
+  }
+  // 선 지우개: 닿은 펜 선을 통째로 지운다
+  function strokeErase(b,p){
+    var list=state.strokes[b.key]||[], before=list.length;
+    state.strokes[b.key]=list.filter(function(st){ return st.e||!hitStroke(st,p,9); });
+    if(state.strokes[b.key].length!==before){ drawInk(b); return true; }
+    return false;
+  }
   function attachDraw(b){
-    var cv=b.ink, cur=null, pid=null;
+    var cv=b.ink, cur=null, pid=null, mode=null, changed=false;
     function pos(e){ var r=cv.getBoundingClientRect(); return [Math.round((e.clientX-r.left)/r.width*S*10)/10, Math.round((e.clientY-r.top)/r.height*S*10)/10]; }
     cv.addEventListener("pointerdown",function(e){
       if(pid!==null) return; pid=e.pointerId; cv.setPointerCapture(pid); e.preventDefault();
-      cur={c:tool.color,e:tool.eraser?1:0,p:[pos(e)]};
+      mode=tool.mode; snap(b.key);
+      if(mode==="stroke"){ changed=strokeErase(b,pos(e)); return; }
+      cur={c:tool.color,e:mode==="erase"?1:0,p:[pos(e)]};
       (state.strokes[b.key]=state.strokes[b.key]||[]).push(cur);
       paintStroke(fit(cv),cur);
     });
     cv.addEventListener("pointermove",function(e){
-      if(e.pointerId!==pid||!cur) return; e.preventDefault();
+      if(e.pointerId!==pid) return; e.preventDefault();
       var list=e.getCoalescedEvents?e.getCoalescedEvents():[e]; if(!list.length) list=[e];
+      if(mode==="stroke"){ list.forEach(function(ev){ if(strokeErase(b,pos(ev))) changed=true; }); return; }
+      if(!cur) return;
       list.forEach(function(ev){cur.p.push(pos(ev));});
       var ctx=fit(cv), n=cur.p.length, seg={c:cur.c,e:cur.e,p:cur.p.slice(Math.max(0,n-list.length-1))};
       paintStroke(ctx,seg);
     });
-    function end(e){ if(e.pointerId!==pid) return; pid=null; cur=null; drawInk(b); save(); }
+    function end(e){
+      if(e.pointerId!==pid) return; pid=null;
+      if(mode==="stroke"&&!changed) hist[b.key].pop(); // 지운 것이 없으면 되돌리기 기록도 버림
+      cur=null; mode=null; changed=false; drawInk(b); save();
+    }
     cv.addEventListener("pointerup",end); cv.addEventListener("pointercancel",end);
   }
 
@@ -516,12 +563,12 @@
   var EMBED=false; try{ EMBED=window.self!==window.top; }catch(e){ EMBED=true; }
   if(EMBED){
     document.documentElement.classList.add("embed");
-    // 문항마다 그리기 도구를 붙이고, 직선 보기 스위치는 아래 요약으로 옮긴다
+    // 그리기 도구는 바깥 페이지(실험실)가 화면 위에 띄워 두고 메시지로 알려 준다
     var gbar=document.querySelector(".toolbar.global");
-    document.querySelectorAll("#problems .panel-body").forEach(function(body){
-      var tb=gbar.cloneNode(true); tb.classList.remove("global"); tb.classList.add("local");
-      var tg=tb.querySelector(".toggle"); if(tg) tg.remove();
-      body.insertBefore(tb,body.firstChild);
+    window.addEventListener("message",function(e){
+      if(e.source!==window.parent||!e.data) return;
+      if(e.data.type==="ptest-tool") setTool(e.data.mode,e.data.color);
+      if(e.data.type==="ptest-clearink") clearInk();
     });
     document.querySelector(".summary .acts").insertBefore(gbar.querySelector(".toggle"),document.querySelector(".summary .acts").firstChild);
     var lastH=0;
@@ -537,22 +584,17 @@
   document.addEventListener("click",function(e){
     var t=e.target.closest("button"); if(!t) return;
     if(t.hasAttribute("data-grade")){ gradeProblem(+t.getAttribute("data-grade")); }
-    if(t.hasAttribute("data-undo")){ var k=t.getAttribute("data-undo"); (state.strokes[k]||[]).pop(); drawInk(boxOf(k)); save(); }
-    if(t.hasAttribute("data-clear")){ var k2=t.getAttribute("data-clear"); if((state.strokes[k2]||[]).length&&confirm("이 칸의 그림을 모두 지울까요?")){ state.strokes[k2]=[]; drawInk(boxOf(k2)); save(); } }
-    if(t.classList.contains("tool")){
-      document.querySelectorAll(".tool").forEach(function(x){
-        var same=x.getAttribute("data-color")===t.getAttribute("data-color")&&x.hasAttribute("data-eraser")===t.hasAttribute("data-eraser");
-        x.setAttribute("aria-pressed",same?"true":"false");
-      });
-      tool.eraser=t.hasAttribute("data-eraser"); if(!tool.eraser) tool.color=t.getAttribute("data-color");
-    }
+    if(t.hasAttribute("data-undo")) undo(t.getAttribute("data-undo"));
+    if(t.hasAttribute("data-clear")){ var k2=t.getAttribute("data-clear"); if((state.strokes[k2]||[]).length){ snap(k2); state.strokes[k2]=[]; drawInk(boxOf(k2)); save(); } }
+    if(t.hasAttribute("data-mode")) setTool(t.getAttribute("data-mode"),t.getAttribute("data-color"));
+    if(t.getAttribute("data-act")==="clearInk"&&confirm("모든 칸의 그림을 지울까요? 가중치·편향은 그대로 둡니다. (칸마다 되돌리기 가능)")) clearInk();
   });
   function boxOf(k){ return boxes.filter(function(b){return b.key===k;})[0]; }
   $("saveImg").addEventListener("click",saveImage);
   $("showLine").addEventListener("change",function(){ boxes.forEach(drawOv); });
   $("resetAll").addEventListener("click",function(){
     if(!confirm("그림과 가중치·편향을 모두 지울까요? 되돌릴 수 없습니다.")) return;
-    state={strokes:{},weights:{}}; graded={}; everGraded=false; qScore={};
+    state={strokes:{},weights:{}}; graded={}; everGraded=false; qScore={}; hist={};
     try{localStorage.removeItem(STORE_KEY);}catch(e){}
     document.querySelectorAll("input[data-w]").forEach(function(x){x.value="";x.classList.remove("bad");});
     document.querySelectorAll(".res,.chain").forEach(function(x){x.innerHTML="";x.className=x.className.split(" ")[0];});

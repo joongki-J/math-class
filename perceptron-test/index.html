@@ -125,6 +125,12 @@
   .toggle input{width:16px;height:16px;accent-color:#15171a}
   .foot{font-size:11px;color:var(--faint);text-align:center;padding:4px 0 10px}
 
+  /* 퍼셉트론 실험실 4장 안에 들어갈 때 */
+  .embed body{min-height:0;background:transparent}
+  .embed .app{padding:0}
+  .embed .topbar,.embed .foot{display:none}
+  .embed .toolbar.global{display:none}
+  .embed .toolbar.local{position:static;box-shadow:none;margin-bottom:12px}
   @media (max-width:820px){
     .boxes{grid-template-columns:1fr}
     .box{max-width:440px;width:100%;margin:0 auto}
@@ -159,7 +165,7 @@
     </div>
   </section>
 
-  <div class="toolbar" role="toolbar" aria-label="그리기 도구">
+  <div class="toolbar global" role="toolbar" aria-label="그리기 도구">
     <span class="lab">펜</span>
     <button class="tool" data-color="#15171a" aria-pressed="true" title="검정 펜"><i style="background:#15171a"></i></button>
     <button class="tool" data-color="#1c6fd8" aria-pressed="false" title="파랑 펜"><i style="background:#1c6fd8"></i></button>
@@ -507,6 +513,23 @@
 
   // ---------- 이벤트 ----------
   build();
+  var EMBED=false; try{ EMBED=window.self!==window.top; }catch(e){ EMBED=true; }
+  if(EMBED){
+    document.documentElement.classList.add("embed");
+    // 문항마다 그리기 도구를 붙이고, 직선 보기 스위치는 아래 요약으로 옮긴다
+    var gbar=document.querySelector(".toolbar.global");
+    document.querySelectorAll("#problems .panel-body").forEach(function(body){
+      var tb=gbar.cloneNode(true); tb.classList.remove("global"); tb.classList.add("local");
+      var tg=tb.querySelector(".toggle"); if(tg) tg.remove();
+      body.insertBefore(tb,body.firstChild);
+    });
+    document.querySelector(".summary .acts").insertBefore(gbar.querySelector(".toggle"),document.querySelector(".summary .acts").firstChild);
+    var lastH=0;
+    var postH=function(){ var h=Math.ceil(document.querySelector(".app").getBoundingClientRect().height)+4;
+      if(h!==lastH){ lastH=h; try{ parent.postMessage({type:"ptest-height",h:h},"*"); }catch(e){} } };
+    if(window.ResizeObserver) new ResizeObserver(postH).observe(document.querySelector(".app"));
+    window.addEventListener("load",postH); postH();
+  }
   document.addEventListener("input",function(e){
     var k=e.target.getAttribute&&e.target.getAttribute("data-w");
     if(k){ state.weights[k]=e.target.value; e.target.classList.remove("bad"); save(); }
@@ -517,8 +540,10 @@
     if(t.hasAttribute("data-undo")){ var k=t.getAttribute("data-undo"); (state.strokes[k]||[]).pop(); drawInk(boxOf(k)); save(); }
     if(t.hasAttribute("data-clear")){ var k2=t.getAttribute("data-clear"); if((state.strokes[k2]||[]).length&&confirm("이 칸의 그림을 모두 지울까요?")){ state.strokes[k2]=[]; drawInk(boxOf(k2)); save(); } }
     if(t.classList.contains("tool")){
-      document.querySelectorAll(".tool").forEach(function(x){x.setAttribute("aria-pressed","false");});
-      t.setAttribute("aria-pressed","true");
+      document.querySelectorAll(".tool").forEach(function(x){
+        var same=x.getAttribute("data-color")===t.getAttribute("data-color")&&x.hasAttribute("data-eraser")===t.hasAttribute("data-eraser");
+        x.setAttribute("aria-pressed",same?"true":"false");
+      });
       tool.eraser=t.hasAttribute("data-eraser"); if(!tool.eraser) tool.color=t.getAttribute("data-color");
     }
   });

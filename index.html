@@ -246,8 +246,7 @@ sub{font-style:normal;font-size:.72em;line-height:0}
 .chapters a{display:flex;flex-direction:column;align-items:center;padding:6px 4px;border-radius:10px;border:1px solid var(--rule);background:var(--card);color:var(--muted);text-decoration:none;font-weight:600;font-size:13.5px;line-height:1.25;text-align:center}
 .chapters a small{font-size:11px;font-weight:500;opacity:.8}
 .chapters a.cur{background:var(--ink);color:var(--card);border-color:var(--ink)}
-.chapters a.ext{border-color:var(--accent);color:#c2410c}
-.chapters a.ext:hover{background:#fff1ea}
+.evalframe{display:block;width:100%;height:1600px;border:0;background:transparent}
 .chapters a:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 .bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
 .seg{display:inline-flex;border:1px solid var(--rule);border-radius:9px;background:var(--card);padding:2px;gap:2px;max-width:100%}
@@ -422,7 +421,7 @@ td.empty{color:var(--rule)}
     <a href="#ch1" data-ch="1">1장<small>기본 논리 연산</small></a>
     <a href="#ch2" data-ch="2">2장<small>가중치 학습</small></a>
     <a href="#ch3" data-ch="3">3장<small>배타적 논리합</small></a>
-    <a href="./perceptron-test/" class="ext" target="_blank" rel="noopener" title="새 창에서 열기">4장<small>형성평가 ↗</small></a>
+    <a href="#ch4" data-ch="4">4장<small>형성평가</small></a>
   </nav>
   <p class="lead" id="lead"></p>
 
@@ -642,6 +641,11 @@ td.empty{color:var(--rule)}
     </div>
     </article>
   </main>
+
+  <!-- ===== 4장: 형성평가 (perceptron-test/를 불러와 보여 줌) ===== -->
+  <section id="evalSec" hidden>
+    <iframe class="evalframe" id="evalFrame" title="퍼셉트론 형성평가"></iframe>
+  </section>
   </div>
 </div>
 
@@ -1373,7 +1377,8 @@ td.empty{color:var(--rule)}
   var LEADS={
     1:"퍼셉트론 하나의 가중치와 편향을 직접 정해 네 가지 논리 연산을 만들어 봅니다.",
     2:"퍼셉트론이 오차를 보고 가중치와 편향을 스스로 고쳐 가는 학습 규칙을 한 단계씩 따라가 봅니다.",
-    3:"배타적 논리합은 단층 퍼셉트론으로 만들 수 있을까요? 먼저 시도해 보고, 다층 퍼셉트론으로 해결해 봅니다."
+    3:"배타적 논리합은 단층 퍼셉트론으로 만들 수 있을까요? 먼저 시도해 보고, 다층 퍼셉트론으로 해결해 봅니다.",
+    4:"좌표평면에 직선을 그려 논리연산을 나누고, 그 직선에서 가중치와 편향을 찾아 다층 퍼셉트론을 완성해 봅니다."
   };
   function show(){
     var ch=NAV.ch, single=(ch===1)||(ch===3&&NAV.xmode==="single");
@@ -1381,6 +1386,8 @@ td.empty{color:var(--rule)}
     $("lead").textContent=LEADS[ch];
     $("bar1").hidden=ch!==1; $("bar3").hidden=ch!==3;
     $("lab").hidden=!single; $("learn").hidden=ch!==2; $("mlp").hidden=!(ch===3&&NAV.xmode==="mlp");
+    $("evalSec").hidden=ch!==4;
+    if(ch===4&&!$("evalFrame").getAttribute("src")) $("evalFrame").setAttribute("src","./perceptron-test/");
     // 진행 중인 실행은 모두 멈춘다
     L.runId++; L.running=false; L.auto=false; lButtons();
     M.runId++; M.running=false; M.paused=false; mButtons();
@@ -1392,12 +1399,17 @@ td.empty{color:var(--rule)}
     if(ch===3&&NAV.xmode==="mlp") mClear();
     if(ch===2){ if(L.cur>=0&&!L.done){L.cur=-1; lRenderPlane();} }
   }
-  function fromHash(){var m=/^#ch([123])$/.exec(location.hash||""); NAV.ch=m?Number(m[1]):1; show();}
+  function fromHash(){var m=/^#ch([1-4])$/.exec(location.hash||""); NAV.ch=m?Number(m[1]):1; show();}
   document.querySelectorAll(".chapters a[data-ch]").forEach(function(a){
     a.addEventListener("click",function(){NAV.ch=Number(a.dataset.ch); show();});
   });
   document.querySelectorAll('input[name="xmode"]').forEach(function(r){r.addEventListener("change",function(){NAV.xmode=r.value; show();});});
   window.addEventListener("hashchange",fromHash);
+  window.addEventListener("message",function(e){
+    var f=$("evalFrame");
+    if(!f||e.source!==f.contentWindow||!e.data||e.data.type!=="ptest-height") return;
+    var h=Number(e.data.h); if(h>200&&h<20000) f.style.height=h+"px";
+  });
 
   lReset(); mClear(); fromHash();
   window.__lab={A:A,L:L,M:M,simulate:simulate,mForward:mForward,GATES:GATES,CASES:CASES};

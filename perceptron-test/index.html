@@ -43,10 +43,7 @@
   .eyebrow span{display:block;width:18px;height:2px;background:var(--accent)}
   h1{font-size:clamp(19px,2vw,24px);margin:0;font-weight:800;letter-spacing:-.04em}
   h1 em{font-style:normal;font-weight:500;background:linear-gradient(transparent 60%,var(--lime) 0)}
-  .who{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px;font-weight:700}
-  .who input{width:46px;padding:7px 6px;border:1px solid #d3cec3;border-radius:9px;background:#fff;text-align:center;font-weight:700}
-  .who input#name{width:96px}
-  .who input:focus,.wrow input:focus{outline:3px solid rgba(217,242,79,.5);border-color:#9aa64b}
+  .wrow input:focus{outline:3px solid rgba(217,242,79,.5);border-color:#9aa64b}
 
   /* 패널 */
   .panel{background:rgba(251,249,243,.97);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
@@ -117,6 +114,9 @@
   .chain.ok{border-color:#7cc4a4;background:#f1faf5}
   .chain.no{border-color:#f0a77f;background:#fff6f0}
 
+  .qgrade{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .qgrade .qs{font-size:14px;font-weight:800;color:var(--muted)}
+  .qgrade .qs b{font-size:22px;color:var(--text);font-variant-numeric:tabular-nums}
   .summary{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
   .score{font-size:15px;font-weight:800}
   .score b{font-size:26px;font-variant-numeric:tabular-nums}
@@ -149,18 +149,13 @@
         <h1>퍼셉트론 <em>형성평가</em></h1>
       </div>
     </div>
-    <div class="who">
-      3학년 <input id="ban" inputmode="numeric" maxlength="2" aria-label="반"> 반
-      <input id="bun" inputmode="numeric" maxlength="2" aria-label="번호"> 번
-      이름 <input id="name" maxlength="10" aria-label="이름">
-    </div>
   </header>
 
   <section class="panel">
     <div class="panel-body guide">
-      퍼셉트론으로 표의 논리연산을 해결하는 <b>가중치</b>를 찾아봅시다. 각 칸의 좌표평면에 <b>네 점을 나누는 직선을 그리고 출력이 1인 영역에 빗금</b>을 친 뒤, 그 직선에서 얻은 가중치를 아래에 적으세요.
+      퍼셉트론으로 표의 논리연산을 해결하는 <b>가중치</b>를 찾아봅시다. 각 칸의 좌표평면에 <b>네 점을 나누는 직선을 그리고 출력이 1인 영역에 빗금</b>을 친 뒤, 그 직선에서 얻은 가중치 <span class="m">w</span>와 편향 <span class="m">b</span>를 아래에 적으세요.
       왼쪽 두 칸은 <span class="m">x</span><sub>1</sub><span class="m">x</span><sub>2</sub>평면, 오른쪽 칸은 <span class="m">y</span><sub>1</sub><span class="m">y</span><sub>2</sub>평면입니다.<br>
-      <span class="rule">출력 규칙: <span class="m">w</span><sub>11</sub><span class="m">x</span><sub>1</sub> + <span class="m">w</span><sub>12</sub><span class="m">x</span><sub>2</sub> + <span class="m">w</span><sub>13</sub> ≥ 0 이면 <span class="m">y</span><sub>1</sub> = 1, &nbsp;&lt; 0 이면 <span class="m">y</span><sub>1</sub> = 0</span>
+      <span class="rule">출력 규칙: <span class="m">w</span><sub>11</sub><span class="m">x</span><sub>1</sub> + <span class="m">w</span><sub>12</sub><span class="m">x</span><sub>2</sub> + <span class="m">b</span><sub>1</sub> ≥ 0 이면 <span class="m">y</span><sub>1</sub> = 1, &nbsp;&lt; 0 이면 <span class="m">y</span><sub>1</sub> = 0</span>
     </div>
   </section>
 
@@ -181,11 +176,10 @@
 
   <section class="panel">
     <div class="panel-body summary">
-      <div class="score" id="score">채점 전 · 그림과 가중치를 모두 적은 뒤 <b style="font-size:inherit">채점하기</b>를 누르세요.</div>
+      <div class="score" id="score">문항마다 그림과 가중치·편향을 적은 뒤 <b style="font-size:inherit">채점하기</b>를 누르세요.</div>
       <div class="acts">
         <button class="btn danger" id="resetAll">전체 지우기</button>
         <button class="btn" id="saveImg">답안 이미지 저장</button>
-        <button class="btn primary" id="grade">채점하기</button>
       </div>
     </div>
   </section>
@@ -197,7 +191,7 @@
   "use strict";
   // 계단함수: 가중합이 0일 때 1로 볼지 여부 (true: s ≥ 0 → 1, false: s > 0 → 1)
   var FIRE_AT_ZERO = true;
-  var STORE_KEY = "perceptron-test-v1";
+  var STORE_KEY = "perceptron-test-v2";
 
   // 표: [x1, x2, y1, y2, z]
   var PROBLEMS = [
@@ -211,6 +205,8 @@
     {out:"z", sub:"",  k:"3", inCols:[2,3], target:4, axes:["y","y"], color:"--c3"}
   ];
 
+  // 칸마다 입력하는 값 이름: w□1, w□2, b□
+  function wNames(N){ return [["w",N.k+"1"],["w",N.k+"2"],["b",N.k]]; }
   var $ = function(id){return document.getElementById(id);};
   function step(s){ return (FIRE_AT_ZERO ? s >= -1e-9 : s > 1e-9) ? 1 : 0; }
   function fmt(v){ var r=Math.round(v*1000)/1000; return (r<0?"−":"")+Math.abs(r); }
@@ -225,11 +221,11 @@
   function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
 
   // ---------- 상태 ----------
-  var state = {info:{ban:"",bun:"",name:""}, strokes:{}, weights:{}};
+  var state = {strokes:{}, weights:{}};
   var graded = {};          // key -> {w:[a,b,c]} 채점 때의 가중치
   var everGraded = false;
   try{ var saved=JSON.parse(localStorage.getItem(STORE_KEY)||"null"); if(saved&&saved.strokes) state=saved; }catch(e){}
-  state.info=state.info||{ban:"",bun:"",name:""}; state.strokes=state.strokes||{}; state.weights=state.weights||{};
+  state.strokes=state.strokes||{}; state.weights=state.weights||{};
   var saveTimer=null;
   function save(){ clearTimeout(saveTimer); saveTimer=setTimeout(function(){ try{localStorage.setItem(STORE_KEY,JSON.stringify(state));}catch(e){} },300); }
 
@@ -241,13 +237,13 @@
     var X=[40,160,270], Y=[30,95,160], r=21;
     var L={x1:[X[0],Y[0]],x2:[X[0],Y[1]],b1:[X[0],Y[2]],y1:[X[1],Y[0]],y2:[X[1],Y[1]],b2:[X[1],Y[2]],z:[X[2],Y[1]]};
     function edge(a,b,c){ return '<line x1="'+(L[a][0]+r)+'" y1="'+L[a][1]+'" x2="'+(L[b][0]-r)+'" y2="'+L[b][1]+'" stroke="'+c+'" stroke-width="1.6"/>'; }
-    function lab(x,y,k,c){ return '<text x="'+x+'" y="'+y+'" fill="'+c+'" font-size="13">w<tspan font-size="9" dy="3" font-style="normal">'+k+'</tspan></text>'; }
+    function lab(x,y,k,c){ var bse=k.length===1?"b":"w"; return '<text x="'+x+'" y="'+y+'" fill="'+c+'" font-size="13">'+bse+'<tspan font-size="9" dy="3" font-style="normal">'+k+'</tspan></text>'; }
     var c1="#1c6fd8",c2="#e0394f",c3="#9a4fc4", h="";
     h+=edge("x1","y1",c1)+edge("x2","y1",c1)+edge("b1","y1",c1);
     h+=edge("x1","y2",c2)+edge("x2","y2",c2)+edge("b1","y2",c2);
     h+=edge("y1","z",c3)+edge("y2","z",c3)+edge("b2","z",c3);
-    h+=lab(66,24,"11",c1)+lab(72,46,"21",c2)+lab(60,78,"12",c1)+lab(78,96,"22",c2)+lab(56,136,"13",c1)+lab(84,160,"23",c2);
-    h+=lab(195,52,"31",c3)+lab(196,90,"32",c3)+lab(196,150,"33",c3);
+    h+=lab(66,24,"11",c1)+lab(72,46,"21",c2)+lab(60,78,"12",c1)+lab(78,96,"22",c2)+lab(58,136,"1",c1)+lab(84,160,"2",c2);
+    h+=lab(195,52,"31",c3)+lab(196,90,"32",c3)+lab(198,150,"3",c3);
     function node(k,b,s){ var p=L[k]; return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+r+'" fill="#fff" stroke="#15171a" stroke-width="1.3"/>'+
       '<text x="'+p[0]+'" y="'+(p[1]+6)+'" text-anchor="middle" font-size="19"'+(s===null?' font-style="normal"':'')+'>'+b+(s?'<tspan font-size="12" dy="4" font-style="normal">'+s+'</tspan>':'')+'</text>'; }
     h+=node("x1","x","1")+node("x2","x","2")+node("b1","1",null)+node("y1","y","1")+node("y2","y","2")+node("b2","1",null)+node("z","z","");
@@ -266,10 +262,10 @@
         var key=(pi+1)+"-"+ni;
         var plane=mathVar(N.axes[0],"1")+mathVar(N.axes[1],"2")+"평면";
         var ws="";
-        for(var j=1;j<=3;j++){
-          var wk=(pi+1)+"-w"+N.k+j;
-          ws+='<label>'+mathVar("w",N.k+j)+'=<input data-w="'+wk+'" inputmode="decimal" autocomplete="off" aria-label="w'+N.k+j+'" value="'+esc(state.weights[wk]||"")+'"></label>';
-        }
+        wNames(N).forEach(function(nm){
+          var wk=(pi+1)+"-"+nm[0]+nm[1];
+          ws+='<label>'+mathVar(nm[0],nm[1])+'=<input data-w="'+wk+'" inputmode="decimal" autocomplete="off" aria-label="'+nm[0]+nm[1]+'" value="'+esc(state.weights[wk]||"")+'"></label>';
+        });
         bx+='<div class="box" data-key="'+key+'">'+
           '<div class="box-head"><span>'+mathVar(N.out,N.sub)+' <span style="font-weight:600;color:#7b7770;font-size:11px">· '+plane+'</span></span>'+
           '<span class="mini"><button data-undo="'+key+'">되돌리기</button><button data-clear="'+key+'">지우기</button></span></div>'+
@@ -277,7 +273,8 @@
           '<div class="wrow">'+ws+'</div><div class="res" id="res-'+key+'"></div></div>';
       });
       html+='<section class="panel"><div class="panel-head"><div class="panel-title">'+(pi+1)+'. 퍼셉트론으로 다음과 같은 논리연산을 해결하기 위한 적합한 가중치를 찾아봅시다.</div></div>'+
-        '<div class="panel-body"><div class="qtop">'+tt+netSVG()+'</div><div class="boxes">'+bx+'</div><div class="chain" id="chain-'+(pi+1)+'"></div></div></section>';
+        '<div class="panel-body"><div class="qtop">'+tt+netSVG()+'</div><div class="boxes">'+bx+'</div><div class="chain" id="chain-'+(pi+1)+'"></div>'+
+        '<div class="qgrade"><span class="qs" id="qs-'+(pi+1)+'">'+(pi+1)+'번 채점 전</span><button class="btn primary" data-grade="'+pi+'">'+(pi+1)+'번 채점하기</button></div></div></section>';
     });
     root.innerHTML=html;
     root.querySelectorAll(".box").forEach(function(el){
@@ -408,15 +405,16 @@
   // ---------- 채점 ----------
   function readW(pi,ni){
     var N=NEURONS[ni], out=[], raw=[];
-    for(var j=1;j<=3;j++){ var k=(pi+1)+"-w"+N.k+j; raw.push(state.weights[k]||""); out.push(parseNum(state.weights[k])); }
+    wNames(N).forEach(function(nm){ var k=(pi+1)+"-"+nm[0]+nm[1]; raw.push(state.weights[k]||""); out.push(parseNum(state.weights[k])); });
     return {w:out,raw:raw};
   }
   function evalNeuron(w,a,b){ var s=w[0]*a+w[1]*b+w[2]; return {s:s,o:step(s)}; }
 
-  function gradeAll(){
-    var total=0, max=0, warnEmpty=0;
+  var qScore={}; // pi -> {total,max,empty}
+  function gradeProblem(pi){
+    var P=PROBLEMS[pi], total=0, max=0, warnEmpty=0;
     everGraded=true; $("showLine").disabled=false;
-    PROBLEMS.forEach(function(P,pi){
+    (function(){
       var allW=[], allOk=true;
       NEURONS.forEach(function(N,ni){
         var key=(pi+1)+"-"+ni, res=$("res-"+key), r=readW(pi,ni), w=r.w; max++;
@@ -427,7 +425,7 @@
         var inkMsg=hasInk?"":'<div class="warn">✎ 좌표평면에 직선과 영역을 그려 주세요.</div>';
         if(w.some(isNaN)){
           delete graded[key]; allOk=false; allW.push(null);
-          res.innerHTML='<div class="verdict na">가중치 세 개를 모두 숫자로 적어 주세요. (예: −1, 0.5, 1/2)</div>'+inkMsg;
+          res.innerHTML='<div class="verdict na">가중치 두 개와 편향을 모두 숫자로 적어 주세요. (예: −1, 0.5, 1/2)</div>'+inkMsg;
           return;
         }
         allW.push(w);
@@ -454,17 +452,19 @@
       });
       ch.className="chain "+(netOk?"ok":"no");
       ch.innerHTML='<b>전체 신경망 확인: '+(netOk?"모든 입력에서 z가 표와 같습니다.":"표와 다른 z가 나옵니다.")+'</b><br>'+lines.join("<br>");
-    });
-    var info=state.info, who=(info.ban&&info.bun&&info.name)?"":' · <span style="color:#9a3412">반·번호·이름을 적어 주세요</span>';
-    $("score").innerHTML='점수 <b>'+total+'</b> / '+max+' 칸'+(warnEmpty?' · <span style="color:#9a3412">그림이 빈 칸 '+warnEmpty+'개</span>':'')+who;
+    })();
+    qScore[pi]={total:total,max:max};
+    $("qs-"+(pi+1)).innerHTML=(pi+1)+'번 <b>'+total+'</b> / '+max+' 칸'+(warnEmpty?' · <span style="color:#9a3412">그림이 빈 칸 '+warnEmpty+'개</span>':'');
+    renderSummary();
     boxes.forEach(drawOv);
-    lastScore={total:total,max:max};
   }
-  var lastScore=null;
+  function scoreText(pi){ var q=qScore[pi]; return (pi+1)+"번 "+(q?q.total+" / "+q.max+" 칸":"채점 전"); }
+  function renderSummary(){
+    $("score").innerHTML=PROBLEMS.map(function(P,pi){ return esc(scoreText(pi)); }).join(" · ");
+  }
 
   // ---------- 답안 이미지 저장 ----------
   function saveImage(){
-    if(!everGraded) gradeAll();
     var W=1240, pad=36, cell=(W-pad*2-2*20)/3, d=2;
     var H=pad+84+PROBLEMS.length*(cell+132)-24;
     var cv=document.createElement("canvas"); cv.width=W*d; cv.height=H*d;
@@ -473,11 +473,9 @@
     var font="Pretendard,'Apple SD Gothic Neo','Noto Sans KR',sans-serif";
     c.fillStyle="#15171a"; c.font="800 24px "+font; c.textAlign="left";
     c.fillText("<인공지능 수학 – 퍼셉트론 형성평가>",pad,pad+24);
-    var i=state.info; c.font="700 19px "+font; c.textAlign="right";
-    c.fillText("3학년 "+(i.ban||"__")+"반 "+(i.bun||"__")+"번  이름: "+(i.name||"______"),W-pad,pad+24);
-    c.font="600 15px "+font; c.fillStyle="#555";
+    c.font="600 15px "+font; c.fillStyle="#555"; c.textAlign="right";
     var now=new Date(), ts=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0")+" "+String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
-    c.fillText("자동 채점 "+(lastScore?lastScore.total+" / "+lastScore.max+" 칸":"-")+"  ·  "+ts,W-pad,pad+52);
+    c.fillText("자동 채점  "+PROBLEMS.map(function(P,pi){return scoreText(pi);}).join("  ·  ")+"     "+ts,W-pad,pad+24);
     var y=pad+84;
     PROBLEMS.forEach(function(P,pi){
       c.textAlign="left"; c.fillStyle="#15171a"; c.font="800 18px "+font;
@@ -491,15 +489,15 @@
         [b.bg,b.ov,b.ink].forEach(function(layer){ c.drawImage(layer,x,top,cell,cell); });
         var r=readW(pi,ni), g=graded[(pi+1)+"-"+ni];
         c.fillStyle="#15171a"; c.font="600 17px 'STIX Two Text','Times New Roman',serif"; c.textAlign="left";
-        var txt=[1,2,3].map(function(j,k){return "w"+N.k+j+" = "+(r.raw[k]||"___");}).join("    ");
-        c.fillText(txt.replace(/w(\d)(\d)/g,function(m,a,b2){return "w"+"₀₁₂₃"[a]+"₀₁₂₃"[b2];}),x+6,top+cell+26);
+        var SUB="₀₁₂₃₄₅₆₇₈₉", txt=wNames(N).map(function(nm,k){return nm[0]+nm[1].replace(/\d/g,function(d){return SUB[d];})+" = "+(r.raw[k]||"___");}).join("    ");
+        c.fillText(txt,x+6,top+cell+26);
         var ok=g&&!g.wrong.length;
         c.font="700 15px "+font; c.fillStyle=g?(ok?"#0c7f57":"#c2410c"):"#888";
-        c.fillText(g?(ok?"✓ 정답":"✗ 틀린 입력 "+g.wrong.length+"개"):"가중치 미입력",x+6,top+cell+50);
+        c.fillText(g?(ok?"✓ 정답":"✗ 틀린 입력 "+g.wrong.length+"개"):"채점 전 또는 미입력",x+6,top+cell+50);
       });
       y=top+cell+90;
     });
-    var nm="퍼셉트론형성평가_"+(i.ban||"")+"반"+(i.bun||"")+"번_"+(i.name||"이름")+".png";
+    var nm="퍼셉트론형성평가.png";
     cv.toBlob(function(blob){
       var a=document.createElement("a"), url=URL.createObjectURL(blob);
       a.href=url; a.download=nm; document.body.appendChild(a); a.click(); a.remove();
@@ -509,16 +507,13 @@
 
   // ---------- 이벤트 ----------
   build();
-  ["ban","bun","name"].forEach(function(id){
-    var el=$(id); el.value=state.info[id]||"";
-    el.addEventListener("input",function(){ state.info[id]=el.value.trim(); save(); });
-  });
   document.addEventListener("input",function(e){
     var k=e.target.getAttribute&&e.target.getAttribute("data-w");
     if(k){ state.weights[k]=e.target.value; e.target.classList.remove("bad"); save(); }
   });
   document.addEventListener("click",function(e){
     var t=e.target.closest("button"); if(!t) return;
+    if(t.hasAttribute("data-grade")){ gradeProblem(+t.getAttribute("data-grade")); }
     if(t.hasAttribute("data-undo")){ var k=t.getAttribute("data-undo"); (state.strokes[k]||[]).pop(); drawInk(boxOf(k)); save(); }
     if(t.hasAttribute("data-clear")){ var k2=t.getAttribute("data-clear"); if((state.strokes[k2]||[]).length&&confirm("이 칸의 그림을 모두 지울까요?")){ state.strokes[k2]=[]; drawInk(boxOf(k2)); save(); } }
     if(t.classList.contains("tool")){
@@ -528,18 +523,17 @@
     }
   });
   function boxOf(k){ return boxes.filter(function(b){return b.key===k;})[0]; }
-  $("grade").addEventListener("click",gradeAll);
   $("saveImg").addEventListener("click",saveImage);
   $("showLine").addEventListener("change",function(){ boxes.forEach(drawOv); });
   $("resetAll").addEventListener("click",function(){
-    if(!confirm("그림과 가중치, 이름을 모두 지울까요? 되돌릴 수 없습니다.")) return;
-    state={info:{ban:"",bun:"",name:""},strokes:{},weights:{}}; graded={}; everGraded=false; lastScore=null;
+    if(!confirm("그림과 가중치·편향을 모두 지울까요? 되돌릴 수 없습니다.")) return;
+    state={strokes:{},weights:{}}; graded={}; everGraded=false; qScore={};
     try{localStorage.removeItem(STORE_KEY);}catch(e){}
     document.querySelectorAll("input[data-w]").forEach(function(x){x.value="";x.classList.remove("bad");});
-    ["ban","bun","name"].forEach(function(id){$(id).value="";});
     document.querySelectorAll(".res,.chain").forEach(function(x){x.innerHTML="";x.className=x.className.split(" ")[0];});
     $("showLine").disabled=true;
-    $("score").innerHTML='채점 전 · 그림과 가중치를 모두 적은 뒤 <b style="font-size:inherit">채점하기</b>를 누르세요.';
+    PROBLEMS.forEach(function(P,pi){ $("qs-"+(pi+1)).textContent=(pi+1)+"번 채점 전"; });
+    $("score").innerHTML='문항마다 그림과 가중치·편향을 적은 뒤 <b style="font-size:inherit">채점하기</b>를 누르세요.';
     renderAll();
   });
   var rt=null; window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(renderAll,120);});

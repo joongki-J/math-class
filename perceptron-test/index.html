@@ -119,6 +119,35 @@
   .chain.ok{border-color:#7cc4a4;background:#f1faf5}
   .chain.no{border-color:#f0a77f;background:#fff6f0}
 
+  /* 입력 중인 칸과 관련된 표 열·신경망만 진하게 */
+  .net .hl,.tt th,.tt td{transition:opacity .2s,color .2s,background .2s}
+  .q.act-0 .net .hl:not(.n0){opacity:.13}
+  .q.act-0 .net .e.n0{stroke-width:3.2}
+  .q.act-0 .net .lb.n0{font-weight:700;font-size:15px}
+  .q.act-0 .net .nd.n0 circle{stroke-width:2.4}
+  .q.act-0 .net .nd.o0 circle{fill:#ecf9a6}
+  .q.act-0 .tt :is(th,td):not(.n0){color:#c9c4b8;background:#faf8f3}
+  .q.act-0 .tt :is(th,td).n0{font-weight:800;background:#fff8d6}
+  .q.act-0 .tt :is(th,td).o0{background:#e6f69a}
+  .q.act-0 .box[data-n="0"]{border-color:#15171a;box-shadow:0 0 0 2px #d9f24f}
+  .q.act-1 .net .hl:not(.n1){opacity:.13}
+  .q.act-1 .net .e.n1{stroke-width:3.2}
+  .q.act-1 .net .lb.n1{font-weight:700;font-size:15px}
+  .q.act-1 .net .nd.n1 circle{stroke-width:2.4}
+  .q.act-1 .net .nd.o1 circle{fill:#ecf9a6}
+  .q.act-1 .tt :is(th,td):not(.n1){color:#c9c4b8;background:#faf8f3}
+  .q.act-1 .tt :is(th,td).n1{font-weight:800;background:#fff8d6}
+  .q.act-1 .tt :is(th,td).o1{background:#e6f69a}
+  .q.act-1 .box[data-n="1"]{border-color:#15171a;box-shadow:0 0 0 2px #d9f24f}
+  .q.act-2 .net .hl:not(.n2){opacity:.13}
+  .q.act-2 .net .e.n2{stroke-width:3.2}
+  .q.act-2 .net .lb.n2{font-weight:700;font-size:15px}
+  .q.act-2 .net .nd.n2 circle{stroke-width:2.4}
+  .q.act-2 .net .nd.o2 circle{fill:#ecf9a6}
+  .q.act-2 .tt :is(th,td):not(.n2){color:#c9c4b8;background:#faf8f3}
+  .q.act-2 .tt :is(th,td).n2{font-weight:800;background:#fff8d6}
+  .q.act-2 .tt :is(th,td).o2{background:#e6f69a}
+  .q.act-2 .box[data-n="2"]{border-color:#15171a;box-shadow:0 0 0 2px #d9f24f}
   .qgrade{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px}
   .qgrade .qs{font-size:14px;font-weight:800;color:var(--muted)}
   .qgrade .qs b{font-size:22px;color:var(--text);font-variant-numeric:tabular-nums}
@@ -245,20 +274,23 @@
   // ---------- 화면 만들기 ----------
   function mathVar(b,s){ return '<span class="m">'+b+(s?'<sub>'+s+'</sub>':'')+'</span>'; }
 
+  // 강조용 분류: nK = K번째 칸(y1, y2, z)과 관련, oK = 그 칸의 출력
+  var NODE_CLS={x1:"n0 n1",x2:"n0 n1",b1:"n0 n1",y1:"n0 n2 o0",y2:"n1 n2 o1",b2:"n2",z:"n2 o2"};
+  var COL_CLS=["n0 n1","n0 n1","n0 n2 o0","n1 n2 o1","n2 o2"];
   function netSVG(){
     // 노드 위치
     var X=[40,160,270], Y=[30,95,160], r=21;
     var L={x1:[X[0],Y[0]],x2:[X[0],Y[1]],b1:[X[0],Y[2]],y1:[X[1],Y[0]],y2:[X[1],Y[1]],b2:[X[1],Y[2]],z:[X[2],Y[1]]};
-    function edge(a,b,c){ return '<line x1="'+(L[a][0]+r)+'" y1="'+L[a][1]+'" x2="'+(L[b][0]-r)+'" y2="'+L[b][1]+'" stroke="'+c+'" stroke-width="1.6"/>'; }
-    function lab(x,y,k,c){ var bse=k.length===1?"b":"w"; return '<text x="'+x+'" y="'+y+'" fill="'+c+'" font-size="13">'+bse+'<tspan font-size="9" dy="3" font-style="normal">'+k+'</tspan></text>'; }
+    function edge(a,b,c,n){ return '<line class="hl e n'+n+'" x1="'+(L[a][0]+r)+'" y1="'+L[a][1]+'" x2="'+(L[b][0]-r)+'" y2="'+L[b][1]+'" stroke="'+c+'" stroke-width="1.6"/>'; }
+    function lab(x,y,k,c,n){ var bse=k.length===1?"b":"w"; return '<text class="hl lb n'+n+'" x="'+x+'" y="'+y+'" fill="'+c+'" font-size="13">'+bse+'<tspan font-size="9" dy="3" font-style="normal">'+k+'</tspan></text>'; }
     var c1="#1c6fd8",c2="#e0394f",c3="#9a4fc4", h="";
-    h+=edge("x1","y1",c1)+edge("x2","y1",c1)+edge("b1","y1",c1);
-    h+=edge("x1","y2",c2)+edge("x2","y2",c2)+edge("b1","y2",c2);
-    h+=edge("y1","z",c3)+edge("y2","z",c3)+edge("b2","z",c3);
-    h+=lab(66,24,"11",c1)+lab(72,46,"21",c2)+lab(60,78,"12",c1)+lab(78,96,"22",c2)+lab(58,136,"1",c1)+lab(84,160,"2",c2);
-    h+=lab(195,52,"31",c3)+lab(196,90,"32",c3)+lab(198,150,"3",c3);
-    function node(k,b,s){ var p=L[k]; return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+r+'" fill="#fff" stroke="#15171a" stroke-width="1.3"/>'+
-      '<text x="'+p[0]+'" y="'+(p[1]+6)+'" text-anchor="middle" font-size="19"'+(s===null?' font-style="normal"':'')+'>'+b+(s?'<tspan font-size="12" dy="4" font-style="normal">'+s+'</tspan>':'')+'</text>'; }
+    h+=edge("x1","y1",c1,0)+edge("x2","y1",c1,0)+edge("b1","y1",c1,0);
+    h+=edge("x1","y2",c2,1)+edge("x2","y2",c2,1)+edge("b1","y2",c2,1);
+    h+=edge("y1","z",c3,2)+edge("y2","z",c3,2)+edge("b2","z",c3,2);
+    h+=lab(66,24,"11",c1,0)+lab(72,46,"21",c2,1)+lab(60,78,"12",c1,0)+lab(78,96,"22",c2,1)+lab(58,136,"1",c1,0)+lab(84,160,"2",c2,1);
+    h+=lab(195,52,"31",c3,2)+lab(196,90,"32",c3,2)+lab(198,150,"3",c3,2);
+    function node(k,b,s){ var p=L[k]; return '<g class="hl nd '+NODE_CLS[k]+'"><circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+r+'" fill="#fff" stroke="#15171a" stroke-width="1.3"/>'+
+      '<text x="'+p[0]+'" y="'+(p[1]+6)+'" text-anchor="middle" font-size="19"'+(s===null?' font-style="normal"':'')+'>'+b+(s?'<tspan font-size="12" dy="4" font-style="normal">'+s+'</tspan>':'')+'</text></g>'; }
     h+=node("x1","x","1")+node("x2","x","2")+node("b1","1",null)+node("y1","y","1")+node("y2","y","2")+node("b2","1",null)+node("z","z","");
     return '<svg class="net" viewBox="0 0 300 190" role="img" aria-label="입력 x1, x2, 1에서 y1, y2를 거쳐 z로 가는 2층 퍼셉트론">'+h+'</svg>';
   }
@@ -267,8 +299,9 @@
   function build(){
     var root=$("problems"), html="";
     PROBLEMS.forEach(function(P,pi){
-      var tt='<table class="tt"><thead><tr><th>x<sub>1</sub></th><th>x<sub>2</sub></th><th>y<sub>1</sub></th><th>y<sub>2</sub></th><th>z</th></tr></thead><tbody>';
-      P.rows.forEach(function(r){ tt+='<tr>'+r.map(function(v){return '<td>'+v+'</td>';}).join("")+'</tr>'; });
+      var heads=["x<sub>1</sub>","x<sub>2</sub>","y<sub>1</sub>","y<sub>2</sub>","z"];
+      var tt='<table class="tt"><thead><tr>'+heads.map(function(hd,ci){return '<th class="'+COL_CLS[ci]+'">'+hd+'</th>';}).join("")+'</tr></thead><tbody>';
+      P.rows.forEach(function(r){ tt+='<tr>'+r.map(function(v,ci){return '<td class="'+COL_CLS[ci]+'">'+v+'</td>';}).join("")+'</tr>'; });
       tt+='</tbody></table>';
       var bx="";
       NEURONS.forEach(function(N,ni){
@@ -279,13 +312,13 @@
           var wk=(pi+1)+"-"+nm[0]+nm[1];
           ws+='<label>'+mathVar(nm[0],nm[1])+'=<input data-w="'+wk+'" inputmode="decimal" autocomplete="off" aria-label="'+nm[0]+nm[1]+'" value="'+esc(state.weights[wk]||"")+'"></label>';
         });
-        bx+='<div class="box" data-key="'+key+'">'+
+        bx+='<div class="box" data-key="'+key+'" data-n="'+ni+'">'+
           '<div class="box-head"><span>'+mathVar(N.out,N.sub)+' <span style="font-weight:600;color:#7b7770;font-size:11px">· '+plane+'</span></span>'+
           '<span class="mini"><button data-undo="'+key+'">되돌리기</button><button data-clear="'+key+'">지우기</button></span></div>'+
           '<div class="stage"><canvas class="bg"></canvas><canvas class="ov"></canvas><canvas class="ink"></canvas></div>'+
           '<div class="wrow">'+ws+'</div><div class="res" id="res-'+key+'"></div></div>';
       });
-      html+='<section class="panel"><div class="panel-head"><div class="panel-title">'+(pi+1)+'. 퍼셉트론으로 다음과 같은 논리연산을 해결하기 위한 적합한 가중치를 찾아봅시다.</div></div>'+
+      html+='<section class="panel q" data-p="'+pi+'"><div class="panel-head"><div class="panel-title">'+(pi+1)+'. 퍼셉트론으로 다음과 같은 논리연산을 해결하기 위한 적합한 가중치를 찾아봅시다.</div></div>'+
         '<div class="panel-body"><div class="qtop">'+tt+netSVG()+'</div><div class="boxes">'+bx+'</div><div class="chain" id="chain-'+(pi+1)+'"></div>'+
         '<div class="qgrade"><span class="qs" id="qs-'+(pi+1)+'">'+(pi+1)+'번 채점 전</span><button class="btn primary" data-grade="'+pi+'">'+(pi+1)+'번 채점하기</button></div></div></section>';
     });
@@ -577,6 +610,14 @@
     if(window.ResizeObserver) new ResizeObserver(postH).observe(document.querySelector(".app"));
     window.addEventListener("load",postH); postH();
   }
+  function activate(el){
+    var box=el&&el.closest&&el.closest(".box"); if(!box) return;
+    var q=box.closest(".q"), n=box.getAttribute("data-n");
+    document.querySelectorAll(".q").forEach(function(x){ x.classList.remove("act-0","act-1","act-2"); });
+    q.classList.add("act-"+n);
+  }
+  document.addEventListener("focusin",function(e){ activate(e.target); });
+  document.addEventListener("pointerdown",function(e){ activate(e.target); },true);
   document.addEventListener("input",function(e){
     var k=e.target.getAttribute&&e.target.getAttribute("data-w");
     if(k){ state.weights[k]=e.target.value; e.target.classList.remove("bad"); save(); }

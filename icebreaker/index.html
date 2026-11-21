@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>퍼셉트론 아이스브레이킹</title>
+<title>블랙박스 뉴런</title>
 <style>
   :root{
     --bg:#f2f0e9; --panel:#fbf9f3; --panel-2:#f4f1e9; --line:#d8d2c7;
@@ -40,7 +40,7 @@
     border:1px solid #c9c4b8;border-radius:999px;padding:8px 13px;background:#fbf9f3;white-space:nowrap}
   .back:hover{border-color:#15171a}
 
-  .tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .tabs{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
   .tabs button{display:flex;flex-direction:row;justify-content:center;gap:8px;align-items:center;padding:9px 4px;border-radius:10px;
     border:1px solid var(--rule);background:var(--card);color:var(--muted);font-weight:600;font-size:14px;cursor:pointer}
   .tabs button small{font-size:13px;font-weight:500;opacity:.85}
@@ -78,25 +78,7 @@
   .guide .time{display:inline-block;margin-left:6px;font-size:11.5px;font-weight:700;color:var(--muted);border:1px solid var(--rule);border-radius:99px;padding:0 7px}
   .ask-list{margin:0;padding-left:18px;font-size:14px;line-height:1.7}
 
-  /* 상황 카드 */
-  .preset{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .preset select{height:38px;border:1px solid #c9c4b8;border-radius:10px;background:#fff;padding:0 10px;font-weight:700;max-width:100%}
-  .question{font-size:clamp(22px,2.6vw,32px);font-weight:800;letter-spacing:-.04em;margin:0;text-align:center}
-  .conds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-  @media (max-width:620px){.conds{grid-template-columns:1fr}}
-  .cond{border:2px solid var(--rule);border-radius:14px;background:#fff;padding:14px 12px;cursor:pointer;text-align:center;
-    display:flex;flex-direction:column;gap:6px;align-items:center;transition:border-color .2s,background .2s}
-  .cond .xname{font-size:14px;color:var(--muted)}
-  .cond .ctext{font-size:clamp(16px,1.5vw,19px);font-weight:700;line-height:1.35;min-height:2.7em;display:flex;align-items:center}
-  .cond .val{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;width:56px;height:56px;border-radius:50%;
-    display:grid;place-items:center;background:var(--off);color:#fff}
-  .cond.on{border-color:var(--on);background:color-mix(in srgb,var(--on) 7%,#fff)}
-  .cond.on .val{background:var(--on)}
-  .cond .yn{font-size:13px;font-weight:700;color:var(--muted)}
-  .cond.on .yn{color:var(--on)}
-  .cond:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
-
-  /* 계산기 */
+  /* 가중치 입력기 · 출력 램프 */
   .wgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
   .wfld{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:15px}
   .stepper{display:flex;align-items:stretch;height:36px;background:var(--card);border:1.5px solid var(--ink);border-radius:9px;overflow:hidden;width:100%;max-width:120px}
@@ -104,19 +86,14 @@
   .stepper button:active{background:var(--rule)}
   .stepper input{width:40px;flex:1.3;min-width:0;border:0;border-left:1px solid var(--rule);border-right:1px solid var(--rule);
     text-align:center;font-size:17px;font-weight:700;background:transparent;font-variant-numeric:tabular-nums;padding:0}
-  .calc{background:var(--panel-2);border:1px solid #ddd7cc;border-radius:12px;padding:10px 12px;font-size:15.5px;line-height:1.7;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
   .lamp{display:flex;align-items:center;gap:12px;font-size:17px;font-weight:800}
   .lamp i{width:46px;height:46px;border-radius:50%;background:var(--off);flex:none;transition:background .2s,box-shadow .2s}
   .lamp.on i{background:var(--on);box-shadow:0 0 0 6px color-mix(in srgb,var(--on) 18%,transparent),0 0 22px var(--on)}
 
-  /* 집계표 */
+  /* 표 */
   table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:14px}
   th,td{padding:5px 3px;text-align:center;border-bottom:1px solid var(--rule)}
   th{font-size:12.5px;color:var(--muted);font-weight:600}
-  tr.cur td{background:color-mix(in srgb,var(--signal) 12%,transparent)}
-  tr.pick{cursor:pointer}
-  tr.pick:hover td{background:color-mix(in srgb,var(--signal) 6%,transparent)}
-  td input{width:56px;height:30px;border:1px solid #d3cec3;border-radius:8px;text-align:center;font-weight:700;background:#fff}
   .pill{display:inline-block;min-width:26px;padding:0 7px;border-radius:99px;font-weight:700;color:#fff}
   .pill.on{background:var(--on)}.pill.off{background:var(--off)}
   .ok{color:var(--good);font-weight:700}.ng{color:var(--bad);font-weight:700}
@@ -152,106 +129,52 @@
   <header class="topbar">
     <div>
       <div class="eyebrow"><span></span>교원 연수 · 도입 활동</div>
-      <h1>나는 <em>퍼셉트론</em>입니다</h1>
-      <p class="subtitle">연수 시작 10~15분, 몸으로 먼저 겪어 보는 퍼셉트론 아이스브레이킹</p>
+      <h1><em>블랙박스</em> 뉴런</h1>
+      <p class="subtitle">연수 시작 10분, 숨은 퍼셉트론의 규칙을 모둠별로 추리하는 아이스브레이킹</p>
     </div>
     <a class="back" href="../">실험실로 →</a>
   </header>
 
   <nav class="tabs" role="tablist" aria-label="활동">
     <button type="button" role="tab" data-tab="guide" aria-selected="true">진행 안내<small>순서·발문</small></button>
-    <button type="button" role="tab" data-tab="me" aria-selected="false">활동 1<small>나는 퍼셉트론</small></button>
-    <button type="button" role="tab" data-tab="box" aria-selected="false">활동 2<small>블랙박스 뉴런</small></button>
+    <button type="button" role="tab" data-tab="box" aria-selected="false">활동<small>블랙박스 뉴런</small></button>
   </nav>
 
   <!-- ===== 진행 안내 ===== -->
   <section id="tab-guide" class="panel guide">
     <div class="panel-head">
       <div class="panel-title">진행 안내</div>
-      <div class="panel-desc">준비물: 이 화면(프로젝터), 참여자 1인당 메모지 1장. 퍼셉트론을 몰라도 참여할 수 있게 설계했습니다.</div>
+      <div class="panel-desc">준비물: 이 화면(프로젝터), 모둠별 메모지. 3~4명씩 모둠을 만들어 진행합니다. 퍼셉트론을 몰라도 참여할 수 있습니다.</div>
     </div>
     <div class="panel-body">
       <ol>
         <li><b>규칙 소개</b><span class="time">1분</span><br>
-          “여러분 한 분 한 분이 오늘 <b>퍼셉트론</b>이 됩니다. 조건 세 가지를 보고, 하고 싶으면 일어서고(출력 1) 아니면 앉아 계세요(출력 0).”</li>
-        <li><b>나만의 가중치 정하기</b><span class="time">2분</span><br>
-          활동 1 화면의 질문과 조건 세 개를 보여 주고, 메모지에 <span class="m">w</span><sub>1</sub>, <span class="m">w</span><sub>2</sub>, <span class="m">w</span><sub>3</sub>(−3~3의 정수)와 <span class="m">b</span>(−5~5의 정수)를 적게 합니다.
-          중요한 조건일수록 가중치를 크게, 싫은 조건이면 음수로, 원래 하고 싶은 마음이 크면 <span class="m">b</span>를 크게 합니다.</li>
-        <li><b>상황 카드 넘기기</b><span class="time">4~5분</span><br>
-          ‘무작위 상황’을 눌러 카드를 바꿀 때마다 각자 <span class="m">z</span>를 계산해 <span class="m">z</span> ≥ 0이면 일어섭니다. 일어선 인원을 집계표에 적습니다.</li>
-        <li><b>가중치로 자기소개</b><span class="time">3분</span><br>
-          의견이 가장 갈린 상황에서 일어선 분과 앉은 분 한 명씩, “저는 <span class="m">w</span><sub>1</sub> = 3인 사람입니다. 동료가 가자고 하면 무조건 갑니다.”처럼 소개합니다.</li>
-        <li><b>블랙박스 뉴런</b> (시간이 남으면)<span class="time">5분</span><br>
-          모둠별로 입력을 넣어 보며 숨은 규칙을 추리하고, 같은 출력을 내는 가중치와 편향을 직접 찾아 확인합니다. 실험실 1장으로 자연스럽게 이어집니다.</li>
+          “이 상자 안에는 입력을 받아 0 또는 1을 내는 기계가 숨어 있습니다. 입력을 넣어 보며 이 기계가 어떤 규칙으로 움직이는지 알아맞혀 보세요. 적은 횟수로 맞힐수록 이깁니다.”</li>
+        <li><b>모둠별 신호 보내기</b><span class="time">3분</span><br>
+          모둠이 돌아가며 입력 하나를 정해 부르면 진행자가 ‘신호 보내기’를 누릅니다. 결과는 모두가 함께 보므로, 어떤 입력을 물어볼지가 전략이 됩니다.</li>
+        <li><b>규칙 말하기</b><span class="time">2분</span><br>
+          규칙을 알아낸 모둠은 손을 들고 말로 설명합니다. 예: “둘 다 1일 때만 불이 켜집니다.”</li>
+        <li><b>가중치와 편향 찾기</b><span class="time">3분</span><br>
+          아래 식을 보여 주고, 같은 출력을 내는 <span class="m">w</span>와 <span class="m">b</span>를 모둠별로 메모지에 적게 합니다. 오른쪽 칸에 넣고 ‘모든 입력에서 확인’을 눌러 검증한 뒤 ‘정답 공개’로 상자 속 값과 비교합니다.</li>
+        <li><b>한 판 더</b> (시간이 남으면)<span class="time">3분</span><br>
+          ‘새 블랙박스’로 바꾸거나 ‘입력 3개’로 난도를 올립니다.</li>
       </ol>
       <div class="formula">
-        <span class="m">z</span> = <span class="m">w</span><sub>1</sub><span class="m">x</span><sub>1</sub> + <span class="m">w</span><sub>2</sub><span class="m">x</span><sub>2</sub> + <span class="m">w</span><sub>3</sub><span class="m">x</span><sub>3</sub> + <span class="m">b</span>,&nbsp;&nbsp;
+        <span class="m">z</span> = <span class="m">w</span><sub>1</sub><span class="m">x</span><sub>1</sub> + <span class="m">w</span><sub>2</sub><span class="m">x</span><sub>2</sub> + <span class="m">b</span>,&nbsp;&nbsp;
         <span class="m">y</span> = 1 (<span class="m">z</span> ≥ 0),&nbsp; <span class="m">y</span> = 0 (<span class="m">z</span> &lt; 0)
       </div>
       <div>
         <div class="panel-title" style="font-size:14px;margin-bottom:6px">마무리 발문</div>
         <ul class="ask-list">
-          <li>모두 일어선 상황, 아무도 일어서지 않은 상황, 의견이 갈린 상황은 각각 무엇이었나요?</li>
-          <li>가중치는 서로 다른데 여덟 상황 모두에서 같이 움직인 두 사람이 있나요? 왜 그럴까요?</li>
-          <li>편향 <span class="m">b</span>는 우리 성격의 어떤 부분을 나타낼까요?</li>
-          <li>내 결정을 바꾸려면 가중치를 어떻게 고쳐야 할까요? → 2장 ‘가중치 학습’으로 이어집니다.</li>
+          <li>규칙을 확실히 알려면 입력을 최소 몇 번 넣어 봐야 할까요?</li>
+          <li>모둠마다 찾은 <span class="m">w</span>와 <span class="m">b</span>가 다른데 모두 정답인 이유는 무엇일까요?</li>
+          <li>입력 2개일 때 1이 나오는 점과 0이 나오는 점을 좌표평면에 찍으면 무엇으로 나눌 수 있을까요? → 실험실 1장으로 이어집니다.</li>
         </ul>
       </div>
     </div>
   </section>
 
-  <!-- ===== 활동 1 ===== -->
-  <section id="tab-me" hidden>
-    <div class="cols">
-      <article class="panel">
-        <div class="panel-head">
-          <div class="panel-title">상황 카드</div>
-          <div class="panel-desc">조건 카드를 누르면 0과 1이 바뀝니다. 각자 <span class="m">z</span> ≥ 0이면 일어서세요.</div>
-        </div>
-        <div class="panel-body">
-          <div class="preset">
-            <label for="preset" style="font-size:13px;font-weight:700;color:var(--muted)">주제</label>
-            <select id="preset"></select>
-          </div>
-          <p class="question" id="question"></p>
-          <div class="conds" id="conds"></div>
-          <div class="row" style="justify-content:center">
-            <button type="button" class="btn primary" id="randBtn">무작위 상황</button>
-            <button type="button" class="btn" id="nextBtn">다음 상황(순서대로)</button>
-          </div>
-        </div>
-      </article>
-
-      <article class="panel">
-        <div class="panel-head">
-          <div class="panel-title">진행자의 퍼셉트론</div>
-          <div class="panel-desc">진행자가 시범으로 자기 가중치를 넣어 계산 과정을 보여 줍니다.</div>
-        </div>
-        <div class="panel-body">
-          <div class="wgrid" id="wgrid"></div>
-          <div class="calc" id="calc"></div>
-          <div class="lamp" id="lamp"><i></i><span id="lampTxt"></span></div>
-        </div>
-      </article>
-    </div>
-
-    <article class="panel" style="margin-top:10px">
-      <div class="panel-head">
-        <div class="panel-title">집계표</div>
-        <div class="panel-desc">줄을 누르면 그 상황이 카드에 나타납니다. 일어선 인원을 적으면 의견이 가장 갈린 상황을 찾아 줍니다.</div>
-      </div>
-      <div class="panel-body">
-        <div class="row">
-          <label style="font-size:13px;font-weight:700;color:var(--muted)">참여 인원 <input type="number" id="total" min="1" max="200" value="20" style="width:64px;height:32px;border:1px solid #d3cec3;border-radius:8px;text-align:center;font-weight:700"></label>
-          <button type="button" class="btn sm" id="clearTally">집계 지우기</button>
-        </div>
-        <div style="overflow-x:auto"><table id="tally"></table></div>
-        <p class="verdict" id="split"></p>
-      </div>
-    </article>
-  </section>
-
-  <!-- ===== 활동 2 ===== -->
+  <!-- ===== 활동: 블랙박스 뉴런 ===== -->
   <section id="tab-box" hidden>
     <div class="cols">
       <article class="panel">
@@ -315,7 +238,7 @@
   var tabs=document.querySelectorAll(".tabs button");
   tabs.forEach(function(t){t.addEventListener("click",function(){
     tabs.forEach(function(o){o.setAttribute("aria-selected",o===t?"true":"false");});
-    ["guide","me","box"].forEach(function(k){$("tab-"+k).hidden=k!==t.dataset.tab;});
+    ["guide","box"].forEach(function(k){$("tab-"+k).hidden=k!==t.dataset.tab;});
   });});
 
   /* ---------- 가중치 입력기 ---------- */
@@ -337,107 +260,7 @@
     return inputs;
   }
 
-  /* ================= 활동 1 ================= */
-  var PRESETS=[
-    {q:"연수 끝나고 커피 한잔 할까?", c:["동료가 같이 가자고 한다","내일 수업 준비를 다 했다","카페까지 걸어서 5분이다"], w:[3,1,1], b:-2},
-    {q:"이 문항, 이번 시험에 낼까?", c:["교과서 핵심 개념이다","학생들이 자주 틀린다","채점 기준 세우기가 쉽다"], w:[2,1,2], b:-3},
-    {q:"이번 주말에 등산 갈까?", c:["날씨가 맑다","전날 늦게 잤다","친구가 차를 태워 준다"], w:[2,-3,1], b:-1},
-    {q:"점심 메뉴, 오늘은 짜장면?", c:["어제 면을 먹었다","배가 많이 고프다","오후에 공개수업이 있다"], w:[-2,2,-1], b:0}
-  ];
-  var A={p:0, x:[1,0,1], w:PRESETS[0].w.slice(), b:PRESETS[0].b, order:0, tally:{}};
-  var sel=$("preset");
-  PRESETS.forEach(function(p,i){var o=document.createElement("option");o.value=i;o.textContent=p.q;sel.appendChild(o);});
-  var CASES3=cases(3);
-
-  function keyOf(x){return x.join("");}
-  function renderConds(){
-    var P=PRESETS[A.p], h="";
-    $("question").textContent=P.q;
-    P.c.forEach(function(t,i){
-      var on=A.x[i]===1;
-      h+='<div class="cond'+(on?" on":"")+'" role="button" tabindex="0" data-i="'+i+'" aria-pressed="'+on+'">'+
-        '<div class="xname">'+sym("x",i+1)+'</div><div class="ctext">'+t+'</div>'+
-        '<div class="val">'+A.x[i]+'</div><div class="yn">'+(on?"그렇다":"아니다")+'</div></div>';
-    });
-    $("conds").innerHTML=h;
-  }
-  $("conds").addEventListener("click",function(e){var c=e.target.closest(".cond");if(!c)return;var i=+c.dataset.i;A.x[i]=1-A.x[i];renderAll();});
-  $("conds").addEventListener("keydown",function(e){if(e.key!=="Enter"&&e.key!==" ")return;var c=e.target.closest(".cond");if(!c)return;e.preventDefault();var i=+c.dataset.i;A.x[i]=1-A.x[i];renderAll();c=$("conds").querySelector('[data-i="'+i+'"]');if(c)c.focus();});
-
-  function renderCalc(){
-    var z=A.w[0]*A.x[0]+A.w[1]*A.x[1]+A.w[2]*A.x[2]+A.b, y=step(z);
-    var terms=[0,1,2].map(function(i){return par(A.w[i])+"×"+A.x[i];}).join(" + ");
-    $("calc").innerHTML=M("z")+" = "+sym("w",1)+sym("x",1)+" + "+sym("w",2)+sym("x",2)+" + "+sym("w",3)+sym("x",3)+" + "+M("b")+
-      "<br>&nbsp;&nbsp;= "+terms+" + "+par(A.b)+
-      "<br>&nbsp;&nbsp;= <b>"+fmt(z)+"</b>&nbsp;&nbsp;"+(z>=0?"≥ 0":"&lt; 0");
-    $("lamp").classList.toggle("on",y===1);
-    $("lampTxt").textContent=y===1?"출력 1 · 일어서기!":"출력 0 · 앉아 있기";
-  }
-  function renderTally(){
-    var P=PRESETS[A.p], h="<thead><tr><th>상황</th>";
-    for(var i=0;i<3;i++) h+="<th>"+sym("x",i+1)+"</th>";
-    h+="<th>진행자 "+M("y")+"</th><th>일어선 인원</th></tr></thead><tbody>";
-    CASES3.forEach(function(c,k){
-      var z=A.w[0]*c[0]+A.w[1]*c[1]+A.w[2]*c[2]+A.b, y=step(z), key=keyOf(c);
-      var v=A.tally[key]; v=(v===undefined||v===null)?"":v;
-      h+='<tr class="pick'+(key===keyOf(A.x)?" cur":"")+'" data-k="'+key+'"><td>'+(k+1)+'</td><td>'+c[0]+'</td><td>'+c[1]+'</td><td>'+c[2]+'</td>'+
-        '<td><span class="pill '+(y?"on":"off")+'">'+y+'</span></td>'+
-        '<td><input type="number" min="0" data-k="'+key+'" value="'+v+'" aria-label="상황 '+(k+1)+' 일어선 인원"></td></tr>';
-    });
-    $("tally").innerHTML=h+"</tbody>";
-    renderSplit();
-  }
-  function renderSplit(){
-    var n=Math.max(1,+$("total").value||1), best=null, all=[], none=[], filled=0;
-    CASES3.forEach(function(c,k){
-      var v=A.tally[keyOf(c)]; if(v===undefined||v===null||v==="")return; v=+v; filled++;
-      if(v>=n) all.push(k+1); if(v===0) none.push(k+1);
-      var d=Math.abs(v-n/2); if(best===null||d<best.d) best={d:d,k:k+1,v:v};
-    });
-    if(!filled){$("split").textContent="";$("split").className="verdict";return;}
-    var s="의견이 가장 갈린 상황: "+best.k+"번 ("+best.v+"명 / "+n+"명)";
-    if(all.length) s+=" · 모두 일어선 상황: "+all.join(", ")+"번";
-    if(none.length) s+=" · 아무도 안 일어선 상황: "+none.join(", ")+"번";
-    $("split").textContent=s; $("split").className="verdict ok";
-  }
-  $("tally").addEventListener("input",function(e){
-    var t=e.target; if(t.tagName!=="INPUT")return;
-    A.tally[t.dataset.k]=t.value===""?null:Math.max(0,+t.value); renderSplit();
-  });
-  $("tally").addEventListener("click",function(e){
-    if(e.target.tagName==="INPUT")return;
-    var r=e.target.closest("tr.pick"); if(!r)return;
-    A.x=r.dataset.k.split("").map(Number); renderAll();
-  });
-  $("total").addEventListener("input",renderSplit);
-  $("clearTally").addEventListener("click",function(){A.tally={};renderTally();});
-
-  function renderAll(){renderConds();renderCalc();
-    // 집계표는 입력 중인 칸을 지우지 않도록 현재 줄 표시만 갱신
-    document.querySelectorAll("#tally tr.pick").forEach(function(r){r.classList.toggle("cur",r.dataset.k===keyOf(A.x));});
-  }
-  function buildWeights(){
-    var vals=[A.w[0],A.w[1],A.w[2],A.b];
-    makeSteppers($("wgrid"),[sym("w",1),sym("w",2),sym("w",3),M("b")],vals,[[-3,3],[-3,3],[-3,3],[-5,5]],function(){
-      A.w=[vals[0],vals[1],vals[2]];A.b=vals[3];renderCalc();renderTally();
-    });
-  }
-  sel.addEventListener("change",function(){
-    A.p=+sel.value; var P=PRESETS[A.p]; A.w=P.w.slice(); A.b=P.b; A.tally={};
-    buildWeights(); renderAll(); renderTally();
-  });
-  $("randBtn").addEventListener("click",function(){
-    var cur=keyOf(A.x), nx;
-    do{nx=CASES3[Math.floor(Math.random()*8)];}while(keyOf(nx)===cur);
-    A.x=nx.slice(); renderAll();
-  });
-  $("nextBtn").addEventListener("click",function(){
-    var i=CASES3.findIndex(function(c){return keyOf(c)===keyOf(A.x);});
-    A.x=CASES3[(i+1)%8].slice(); renderAll();
-  });
-  buildWeights(); renderAll(); renderTally();
-
-  /* ================= 활동 2 ================= */
+  /* ================= 블랙박스 뉴런 ================= */
   // 모든 규칙은 정수 가중치·편향으로 실제로 구현됨 (아래 검사 코드 참고)
   var RULES={
     2:[
